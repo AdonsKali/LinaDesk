@@ -74,11 +74,8 @@ class BaseController(QObject):
         """AI завершил работу """
         try:
             log("info", "AI", "done.")
-            if hasattr(self.message, '_hold_timer'):
-                self.message._hold_timer.singleShot(4000, self.message._animate_to_tail)
-            
-            if self.chat:
-                self.chat.update_signal.emit()
+            self.message.hide_bubble.emit(4000)
+            self.chat.update_signal.emit()
             
             self.state_machine.set_state(LinaState.IDLE)
         except Exception as e:
@@ -120,7 +117,7 @@ class BaseController(QObject):
                     self.voice_button.show()
                 wake_word = self.wake_words[randint(0, len(self.wake_words)-1)]
                 if self.message:
-                    self.message.show_text.emit([wake_word, 50])
+                    self.message.show_text.emit({"wake_word": wake_word, "rate": 50})
                 
                 self.state_machine.set_state(LinaState.TALKING)
                 log("info", "LINA", "wake upped")

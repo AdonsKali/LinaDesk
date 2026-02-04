@@ -1,9 +1,10 @@
 /.venv
 /llama-cpp-python
-/tests
 /.vscode
 app/src/media/sprite_manager
 app/tests
 server/models/model.gguf
 server/models/Qwen3-4B-Instruct-2507-Q5_K_S.gguf
 server/models/voice
+/log.txt
+*/__pycache__

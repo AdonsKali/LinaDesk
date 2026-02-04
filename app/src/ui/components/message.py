@@ -6,9 +6,10 @@ from PySide6.QtGui import QPainter, QPolygon, QBrush, QFont, QTextOption
 
 class Message(QWidget, Animation):
 
-    show_text = Signal(list)
+    show_text = Signal(dict)
+    hide_bubble = Signal(int)
     realtime_text = Signal(str)
-    second_time = Signal(tuple)
+
 
     def __init__(self):
         QWidget.__init__(self, obj=self)
@@ -25,8 +26,9 @@ class Message(QWidget, Animation):
 
         #Connects
         self._m_char_timer.timeout.connect(self.__print_next_char)
-        self.show_text.connect(self.set_text)
-        self.realtime_text.connect(self.append_realtime_text)
+        self.show_text.connect(self.__set_text)
+        self.hide_bubble.connect(self.__hide_bub)
+        self.realtime_text.connect(self.__append_realtime_text)
 
         self._text_edit = QTextEdit(self)
         self._text_edit.setReadOnly(True)
@@ -79,7 +81,7 @@ class Message(QWidget, Animation):
         self._text_edit.setGeometry(self._text_rect)
 
 
-    def append_realtime_text(self, chunk: str):
+    def __append_realtime_text(self, chunk: str):
         if not self._animating or self._anim_progress == 0.0:
             self._animate_from_tail()
         current = self._text_edit.toPlainText()
@@ -94,14 +96,21 @@ class Message(QWidget, Animation):
         self.update()
 
 
-    def set_text(self, args: list):
+    def __set_text(self, args: dict):
         if self._hold_timer.isActive():
             self._hold_timer.stop()
         self._animate_from_tail()
-        self._m_full_text = args[0]
+        self._m_full_text = args.get('wake_word')
         self._m_current_char = 0
         self._text_edit.clear()
-        self._m_char_timer.start(args[1])
+        self._m_char_timer.start(args.get('rate'))
+
+
+    def __hide_bub(self, time: int):
+        """Скрыть через определенное время"""
+        if self._hold_timer.isActive():
+            self._hold_timer.stop()
+        self._hold_timer.singleShot(time, self._animate_to_tail)
 
 
     def __print_next_char(self):
@@ -201,6 +210,6 @@ class Message(QWidget, Animation):
             else:
                 self._anim_progress = 0.0
                 self.animation_delay.stop()
-                self.hide()  # или emit Signal, если нужно завершение
+                self.hide()
         self.update()
         
