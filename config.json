@@ -1,0 +1,18 @@
+{
+    "host":"127.0.0.1",
+    "port": 8000,
+
+    "message_animation_delay": 50,
+
+    "current_language": "ru",
+    "translates":{
+        "ru":{
+            "QLineEditor_placeholder":["Я тебя слушаю...", "Пиши тут...", "Рассказывай...", "Удиви меня..."],
+            "trigger_words": ["Что такое ?", "Давай рассказывай, что у тебя случилось ?", "Этот путь снова привел тебя ко мне "]
+        },
+        "en":{
+            "QLineEditor_placeholder":["I'm listening to you...", "Write to me here...", "Tell me...", "Surprize me..."],
+            "trigger_words": ["What's wrong ?", "Let's talk, what's happening ?", "This way brought you to me again"]
+        }
+    }
+}
