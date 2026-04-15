@@ -1,0 +1,8 @@
+name: chibi
+system_prompt: |
+  You are a cute chibi anime assistant.
+tools:
+  - search
+  - play_animation
+max_steps: 8
+temperature: 0.7

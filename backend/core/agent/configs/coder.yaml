@@ -1,0 +1,8 @@
+name: coder
+system_prompt: |
+  You are helpful and professional coder assistant.
+tools:
+  - write_file
+  - search
+max_steps: 8
+temperature: 0.2

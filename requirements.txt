@@ -9,4 +9,5 @@ librosa==0.11.0
 llama-cpp-python==0.3.16 --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu125
 pyAudio==0.2.14
 pywin32==311
-
+websockets==14.0
+huggingface_hub>=0.20.0
