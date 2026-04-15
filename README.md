@@ -1,4 +1,4 @@
-<img src="git/splash_git.png" alt="main_picture" style="border-radius: 20px"> 
+<img src="splash_git.png" alt="main_picture" style="border-radius: 20px"> 
 
 <h1 style="text-shadow: 0 0 5px #ff96d5
  ">🌸 Lina AI</h1>
