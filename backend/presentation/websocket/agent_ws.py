@@ -61,6 +61,7 @@ class AgentWebSocketHandler(BaseWebSocketHandler):
                     elif isinstance(data, ClientComplete) or isinstance(data, ClientError):
                         await self.send_json(client_id, {"type": data.type})
             
+            
             elif msg_type == "reset":
                 controller.reset()
                 await self.send_json(client_id, {"type": "reset"})

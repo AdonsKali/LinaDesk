@@ -1,111 +1,212 @@
-from typing import List, Dict, Any
-from backend.infrastructure.services.RAG.rag_manager import RAGManager
+import pickle
 from logger import log
+from typing import List, Dict, Optional, Union
+from pathlib import Path
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+from backend.application.interfaces.rag_abc import RAGABC
 
 
-class RAGService:
+class RAGService(RAGABC):
     """
-    Service class to handle RAG functionality throughout the application
+    Simple but quality RAG (Retrieval Augmented Generation) service
+    Allows storing, retrieving, and searching documents using vector embeddings
     """
     
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2", index_path: str = None):
-        try:
-            self.rag_manager = RAGManager(model_name=model_name, index_path=index_path)
-            log("RAG Service initialized successfully", 'info', __name__)
-        except Exception as e:
-            log(f"Error initializing RAG Service: {str(e)}", 'error', __name__)
-            # Fallback to default initialization
-            self.rag_manager = RAGManager(model_name=model_name)
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+        """
+        Initialize the RAG service
+        
+        Args:
+            model_name: Name of the sentence transformer model to use for embeddings
+            index_path: Path to store/load the vector index
+        """
+        index_path = "backend/infrastructure/data/rag_index.faiss"
+        self.index_path = Path("backend/infrastructure/data/rag_index.faiss")
+        self.index_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        log(f"Loading embedding model: {model_name}", 'info', __name__)
+        self.encoder = SentenceTransformer(model_name)
+        self.documents: List[Dict[str, Union[str, Dict]]] = []
+        self.embeddings: Optional[np.ndarray] = None
+        if self.index_path.exists():
+            self.load_index()
+        else:
+            log(f"No existing index found at {index_path}. Creating new index.")
     
-    def add_conversation(self, user_input: str, ai_response: str, session_id: str = None):
+    def add_document(self, content: str, metadata: Optional[Dict] = None, doc_id: Optional[str] = None) -> str:
         """
-        Add a conversation pair to the RAG memory
+        Add a document to the RAG index
+        
+        Args:
+            content: Text content of the document
+            metadata: Optional metadata dictionary
+            doc_id: Optional document ID (auto-generated if not provided)
+            
+        Returns:
+            Document ID
         """
-        try:
-            content = f"User: {user_input}\nAssistant: {ai_response}"
-            metadata = {
-                "type": "conversation",
-                "user_input": user_input,
-                "ai_response": ai_response
+        if not doc_id:
+            doc_id = f"doc_{len(self.documents)}"
+        
+        document = {
+            "id": doc_id,
+            "content": content,
+            "metadata": metadata or {}
+        }
+        
+        self.documents.append(document)
+        new_embedding = self.encoder.encode([content])
+        if self.embeddings is None:
+            self.embeddings = new_embedding
+        else:
+            self.embeddings = np.vstack([self.embeddings, new_embedding])
+        
+        log(f"Added document {doc_id} to index", 'info', __name__)
+        return doc_id
+    
+    def add_documents(self, documents: List[Dict[str, Union[str, Dict]]]) -> List[str]:
+        """
+        Add multiple documents at once
+        
+        Args:
+            documents: List of documents in format {"content": "...", "metadata": {}, "id": "..."}
+            
+        Returns:
+            List of document IDs
+        """
+        doc_ids = []
+        
+        contents = [doc["content"] for doc in documents]
+        embeddings = self.encoder.encode(contents)
+        
+        for i, doc in enumerate(documents):
+            doc_id = doc.get("id") or f"doc_{len(self.documents) + i}"
+            document = {
+                "id": doc_id,
+                "content": doc["content"],
+                "metadata": doc.get("metadata", {})
             }
-            if session_id:
-                metadata["session_id"] = session_id
-                
-            self.rag_manager.add_document(content, metadata)
-            log(f"Added conversation to RAG: {user_input[:50]}...", 'debug', __name__)
-        except Exception as e:
-            log(f"Error adding conversation to RAG: {str(e)}", 'error', __name__)
-    
-    def add_document(self, content: str, doc_type: str = "general", metadata: Dict[str, Any] = None):
-        """
-        Add a general document to the RAG memory
-        """
-        try:
-            if metadata is None:
-                metadata = {}
             
-            metadata.update({"type": doc_type})
-            self.rag_manager.add_document(content, metadata)
-            log(f"Added document to RAG: {content[:50]}...", 'debug', __name__)
-        except Exception as e:
-            log(f"Error adding document to RAG: {str(e)}", 'error', __name__)
+            self.documents.append(document)
+            doc_ids.append(doc_id)
+        
+        if self.embeddings is None:
+            self.embeddings = embeddings
+        else:
+            self.embeddings = np.vstack([self.embeddings, embeddings])
+        
+        log(f"Added {len(documents)} documents to index", 'info', __name__)
+        return doc_ids
     
-    def search_relevant_context(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    def search(self, query: str, top_k: int = 5) -> List[Dict[str, Union[str, Dict, float]]]:
         """
-        Search for relevant context based on the query
+        Search for relevant documents given a query
+        
+        Args:
+            query: Search query
+            top_k: Number of top results to return
+            
+        Returns:
+            List of documents with similarity scores in format:
+            [{"content": "...", "metadata": {}, "score": 0.x}, ...]
         """
-        try:
-            results = self.rag_manager.search(query, top_k)
-            log(f"RAG search for '{query[:30]}...' found {len(results)} results", 'debug', __name__)
-            return results
-        except Exception as e:
-            log(f"Error searching RAG: {str(e)}", 'error', __name__)
+        if not self.documents or self.embeddings is None:
+            log("No documents in index", 'warning', __name__)
             return []
+        
+        query_embedding = self.encoder.encode([query])
+        similarities = cosine_similarity(query_embedding, self.embeddings)[0]
+        top_indices = np.argsort(similarities)[::-1][:top_k]
+        
+        results = []
+        for idx in top_indices:
+            score = float(similarities[idx])
+            if score > 0.01:  # Filter out very low similarity matches
+                doc = self.documents[idx]
+                results.append({
+                    "id": doc["id"],
+                    "content": doc["content"],
+                    "metadata": doc["metadata"],
+                    "score": score
+                })
+        
+        log(f"Found {len(results)} results for query: {query[:50]}...", 'info', __name__)
+        return results
     
-    def get_context_for_query(self, query: str, top_k: int = 3) -> str:
+    def get_document(self, doc_id: str) -> Optional[Dict[str, Union[str, Dict]]]:
         """
-        Get formatted context for a query to be used in prompting
+        Retrieve a specific document by ID
+        
+        Args:
+            doc_id: Document ID
+            
+        Returns:
+            Document or None if not found
         """
-        try:
-            results = self.search_relevant_context(query, top_k)
+        for doc in self.documents:
+            if doc["id"] == doc_id:
+                return doc
+        return None
+    
+    def remove_document(self, doc_id: str) -> bool:
+        """
+        Remove a document by ID
+        
+        Args:
+            doc_id: Document ID to remove
             
-            if not results:
-                log(f"No relevant context found for query: {query[:50]}...", 'debug', __name__)
-                return ""
-            
-            context_parts = ["Relevant context from previous conversations:"]
-            for i, result in enumerate(results, 1):
-                # Extract just the content part without the metadata
-                text = result['text']
-                if 'User:' in text and 'Assistant:' in text:
-                    # Format as a conversation snippet
-                    context_parts.append(f"Past conversation #{i}: {text}")
+        Returns:
+            True if document was removed, False otherwise
+        """
+        for i, doc in enumerate(self.documents):
+            if doc["id"] == doc_id:
+                self.documents.pop(i)
+                if self.embeddings.shape[0] > 1:
+                    self.embeddings = np.delete(self.embeddings, i, axis=0)
                 else:
-                    context_parts.append(f"Information #{i}: {text[:300]}...")
+                    self.embeddings = None
+                
+                log(f"Removed document {doc_id}", 'info', __name__)
+                return True
+        
+        log(f"Document {doc_id} not found for removal", 'warning', __name__)
+        return False
+    
+    def save_index(self):
+        """Save the current index to disk"""
+        data = {
+            "documents": self.documents,
+            "embeddings": self.embeddings
+        }
+        with open(self.index_path, "wb") as f:
+            pickle.dump(data, f)
+        log(f"Saved index with {len(self.documents)} documents to {self.index_path}, 'info', __name__")
+    
+    def load_index(self):
+        """Load the index from disk"""
+        try:
+            with open(self.index_path, "rb") as f:
+                data = pickle.load(f)
             
-            context_str = "\n".join(context_parts)
-            log(f"Generated RAG context: {context_str[:100]}...", 'debug', __name__)
-            return context_str
+            self.documents = data["documents"]
+            self.embeddings = data["embeddings"]
+            
+            log(f"Loaded index with {len(self.documents)} documents from {self.index_path}", 'info', __name__)
         except Exception as e:
-            log(f"Error generating RAG context: {str(e)}", 'error', __name__)
-            return ""
+            log(f"Failed to load index from {self.index_path}: {e}", 'error', __name__)
+            self.documents = []
+            self.embeddings = None
     
-    def clear_memory(self):
-        """
-        Clear all stored memory
-        """
-        try:
-            self.rag_manager.clear()
-            log("RAG memory cleared", 'info', __name__)
-        except Exception as e:
-            log(f"Error clearing RAG memory: {str(e)}", 'error', __name__)
+    def clear_index(self):
+        """Clear all documents from the index"""
+        self.documents = []
+        self.embeddings = None
+        log("Cleared RAG index", 'info', __name__)
+        if self.index_path.exists():
+            self.index_path.unlink()
     
-    def delete_by_session(self, session_id: str):
-        """
-        Delete all entries associated with a specific session
-        """
-        try:
-            self.rag_manager.delete_by_metadata("session_id", session_id)
-            log(f"Deleted RAG entries for session {session_id}", 'info', __name__)
-        except Exception as e:
-            log(f"Error deleting RAG entries for session {str(e)}", 'error', __name__)
+    def get_document_count(self) -> int:
+        """Get the number of documents in the index"""
+        return len(self.documents)

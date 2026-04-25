@@ -13,8 +13,6 @@ async def lifespan(app: FastAPI):
     log("Starting Lina AI Server...", 'info', __name__)
 
     config = Config()
-    
-    # Инициализация контейнера
     container = Container()
     container.config.from_pydantic(config)
     container.init_resources()
@@ -28,9 +26,8 @@ async def lifespan(app: FastAPI):
     log("Initializing Tool Manager...", 'info', __name__)
     container.tool_manager()  
     
-    # Initialize RAG service to ensure it loads the index at startup
-    # log("Initializing RAG service...", 'info', __name__)
-    # container.rag_service()
+    log("Initializing RAG service...", 'info', __name__)
+    container.rag_service()
     
     app.state.container = container
     

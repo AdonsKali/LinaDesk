@@ -1,31 +1,30 @@
-from abc import ABC, abstractmethod
 from typing import List
-
-from backend.core.agent.config import Config
+import yaml
 from backend.core.schemas.tool_schema import ToolSchema
 from ..schemas.message_schema import MessageHistory
-from .state import State
+from paths import CONFIGS
 
 
 class Agent():
     def __init__(self):
         super().__init__() 
-        self.state = State.IDLE
-        self.config: Config
-
-
         self.name: str
         self.tools: List[ToolSchema]
-        self.system_prompt: str
-        self.max_steps: int
-        self.temperature: float
+        self.system_prompt: str = ""
+        self.load_config("chibi.yaml")
 
         self.history: List[MessageHistory] = []
         
 
+        if self.system_prompt:
+            self.history.append(MessageHistory(
+                role='system',
+                content=self.system_prompt
+            ))
+        
+
     def reset(self):
         self.history.clear()
-        self.state = State.IDLE
 
 
     def add_message(self, message: MessageHistory):
@@ -43,12 +42,21 @@ class Agent():
     def get_last(self) -> MessageHistory:
         return self.history[-1]
     
-
-    def get_state(self):
-        return self.state
+    def get_system(self) -> MessageHistory:
+        return self.history[0]
     
+    def record_message(self, index: int, message: MessageHistory) -> bool:
+        self.history[index] = message
+        return True
+    
+    def load_config(self, yaml_file: str):
+        with open(f'{CONFIGS}/{yaml_file}', 'r') as file:
+            config = yaml.safe_load(file)
+            # self.tools = [ToolSchema(**tool) for tool in config['tools']]
+            self.name = config['name']
+            self.system_prompt = config['system_prompt']
 
-    def set_cfg(self, cfg: Config):
-        self.config = cfg
 
+    def get_tools(self) -> List[ToolSchema]:
+        return self.tools
 

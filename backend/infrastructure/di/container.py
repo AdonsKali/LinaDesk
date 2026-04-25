@@ -1,18 +1,14 @@
 from dependency_injector import containers, providers
-
-from backend.core import agent
 from backend.core.agent.agent import Agent
 from backend.infrastructure.services import LlamaCppInference, VoskRecognizer
+from backend.infrastructure.services.RAG.rag_service import RAGService
 from backend.infrastructure.tools.manager import ToolManager
 from backend.application.agent_controller import AgentController
 from backend.application.asr_controller import ASRController
-from backend.infrastructure.services.RAG.rag_service import RAGService
-from backend.application.agent_factory import AgentFactory
-import os
 
 
 class Container(containers.DeclarativeContainer):
-    """Упрощенный DI контейнер"""
+    """DI контейнер с интерфейсами для всех сервисов"""
     
     wiring_config = containers.WiringConfiguration(
         modules=[
@@ -24,19 +20,12 @@ class Container(containers.DeclarativeContainer):
     
     config = providers.Configuration()
     
-    # Define path for RAG index files
-    rag_index_path = f"backend/infrastructure/data/rag_index.faiss"
-    
     tool_manager = providers.Singleton(ToolManager)
-    # rag_service = providers.Singleton(
-    #     RAGService,
-    #     model_name=config.rag_model_path,
-    #     index_path=rag_index_path
-    # )
-    agent_factory = providers.Factory(
-        AgentFactory,
-        tool_manager=tool_manager
+    rag_service = providers.Singleton(
+        RAGService,
+        model_name=config.rag_model_path,
     )
+    
     agent = providers.Factory(Agent)
     
     inference = providers.Singleton(
@@ -57,7 +46,7 @@ class Container(containers.DeclarativeContainer):
         inference=inference,
         tool_manager=tool_manager,
         agent=agent,
-        # rag_service=rag_service,
+        rag_service=rag_service,
         enable_rag=True
     )
     

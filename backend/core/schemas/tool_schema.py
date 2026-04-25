@@ -17,8 +17,3 @@ class ToolSchema:
 class ToolCall:
     name: str
     arguments: Dict[str, Any]
-
-
-
-
-

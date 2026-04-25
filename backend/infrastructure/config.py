@@ -4,8 +4,6 @@ from pydantic import Field
 
 
 class Config(BaseSettings):
-    """Единая конфигурация приложения"""
-
     llm_model_path: str = Field(default=f"{MODELS}/model3.gguf", alias="LLM_MODEL_PATH")
     llm_context_size: int = Field(default=4096, alias="LLM_CONTEXT_SIZE")
     llm_threads: int = Field(default=6, alias="LLM_THREADS")

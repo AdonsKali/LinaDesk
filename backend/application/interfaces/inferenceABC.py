@@ -1,13 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Union
+from typing import List
 from typing import AsyncGenerator
 from backend.core.schemas import MessageHistory
-from backend.core.schemas.streaming import (
-    StreamComplete,
-    StreamError,
-    TokenChunk,
-    ToolCallChunk
-)
 
 
 class InferenceABC(ABC):

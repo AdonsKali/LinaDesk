@@ -1,5 +1,5 @@
 import json
-from typing import AsyncGenerator, List, Union
+from typing import AsyncGenerator, List
 from backend.core.schemas.client_schema import (
     ClientToken,
     ClientComplete,
@@ -17,15 +17,21 @@ from backend.application.interfaces.inferenceABC import InferenceABC
 from backend.core.agent.agent import Agent
 from backend.core.schemas.tool_schema import ToolCall
 from logger import log
+from backend.application.interfaces.rag_abc import RAGABC
 
 
 class AgentController:
-    def __init__(self, inference: InferenceABC, tool_manager, agent: Agent, enable_rag=True):
+    def __init__(self, inference: InferenceABC, 
+                 tool_manager, 
+                 agent: Agent, 
+                 rag_service: RAGABC,
+                 enable_rag=True
+                 ):
 
         self.inference = inference
         self.tool_manager = tool_manager
         self.agent = agent
-        # self.rag_service = rag_service
+        self.rag_service = rag_service
         self.enable_rag = enable_rag
 
         self.running = False
@@ -42,32 +48,50 @@ class AgentController:
         if not prompt.strip():
             yield ClientError(type="error", message="Empty prompt")
             return
-        
-        # if self.enable_rag and self.rag_service:
-        #     try:
-        #         context_str = self.rag_service.get_context_for_query(prompt)
-        #         if context_str:
-        #             self.agent.add_message(
-        #                 MessageHistory(
-        #                     role="assistant",
-        #                     content=f"Additional context for this conversation: {context_str}"
-        #                 )
-        #             )
-        #     except Exception as e:
-        #         log(f"RAG search error: {str(e)}", 'warning', __name__)
 
+        rag_context = ""
+        if self.enable_rag and self.rag_service:
+            rag_results = self.rag_service.search(prompt, top_k=3)
+            if rag_results:
+                rag_context = "\n".join([f"Relevant info: {result['content']} (confidence: {result['score']:.2f})" for result in rag_results])
+                
         self.agent.add_message(
-            MessageHistory(role="user", content=prompt)
+            MessageHistory(role="user", content=f"Context for user query: {rag_context}\n{prompt}")
         )
-
-        print(self.agent.history)
-
+        
+        if self.enable_rag and self.rag_service:
+            self.rag_service.add_document(
+                content=prompt,
+                metadata={
+                    "type": "user_query",
+                    "source": "agent_controller"
+                }
+            )
+        
         async for event in self._run_agent_loop():
+            if isinstance(event, ClientComplete) and self.enable_rag and self.rag_service:
+                history = self.agent.get_history()
+                
+                if history and len(history) >= 2:
+                    last_user_message = history[-2]
+                    last_assistant_message = history[-1]
+                    
+                    interaction_content = f"User: {last_user_message.content}\nAssistant: {last_assistant_message.content}"
+                    self.rag_service.add_document(
+                        content=interaction_content,
+                        metadata={
+                            "type": "qa_pair",
+                            "source": "agent_controller",
+                            "user_query": last_user_message.content[:100]
+                        }
+                    )
+                
+                    self.rag_service.save_index()
+            
             yield event
 
 
     async def _run_agent_loop(self):
-
         if self.running:
             return
 
@@ -75,9 +99,7 @@ class AgentController:
         previous_tool_calls = []
 
         try:
-
             for step in range(self.max_steps):
-
                 history: List[MessageHistory] = self.agent.get_history()
                 assistant_text = ""
                 tool_calls: List[ToolCall] = []
@@ -90,29 +112,17 @@ class AgentController:
                             content=event.content
                         )
                     elif isinstance(event, ToolCallChunk):
-
                         tool_calls.append(event.tool)
                         break
 
                     elif isinstance(event, StreamComplete):
-
                         if assistant_text.strip():
-
                             self.agent.add_message(
-                                MessageHistory(
-                                    role="assistant",
-                                    content=assistant_text
+                            MessageHistory(
+                                role="assistant",
+                                content=assistant_text
                                 )
                             )
-                            # if self.enable_rag and self.rag_service:
-                            #     try:
-                            #         # Save the full conversation context
-                            #         user_messages = [msg.content for msg in history if msg.role == "user"]
-                            #         if user_messages:
-                            #             latest_user_msg = user_messages[-1]
-                            #             self.rag_service.add_conversation(latest_user_msg, assistant_text)
-                            #     except Exception as e:
-                            #         log(f"RAG memory save error: {str(e)}", 'warning', __name__)
 
                         yield ClientComplete(type="complete")
                         return
@@ -126,7 +136,6 @@ class AgentController:
 
                 if not tool_calls:
                     if assistant_text.strip():
-
                         self.agent.add_message(
                             MessageHistory(
                                 role="assistant",
@@ -134,23 +143,11 @@ class AgentController:
                             )
                         )
 
-                        # # Save the conversation to RAG memory for future retrieval
-                        # if self.enable_rag and self.rag_service:
-                        #     try:
-                        #         # Save the full conversation context
-                        #         user_messages = [msg.content for msg in history if msg.role == "user"]
-                        #         if user_messages:
-                        #             latest_user_msg = user_messages[-1]
-                        #             self.rag_service.add_conversation(latest_user_msg, assistant_text)
-                        #     except Exception as e:
-                        #         log(f"RAG memory save error: {str(e)}", 'warning', __name__)
-
                     yield ClientComplete(type="complete")
                     return
 
                 current_tool_calls = [(tc.name, tuple(sorted(tc.arguments.items()))) for tc in tool_calls]
                 
-                # If we're calling the same tools with the same arguments as the previous step, break the loop
                 if current_tool_calls == previous_tool_calls:
                     log(f"Detected repeated tool calls: {current_tool_calls}, stopping to prevent infinite loop", 'warning', __name__)
                     yield ClientError(
@@ -173,32 +170,12 @@ class AgentController:
                         result = {"error": str(e)}
                     
                     log(f"Results: {result}", 'debug', __name__)
-                    
-                    # Format the result with explicit status indicator for the LLM
                     formatted_result = f"Tool '{tool_call.name}' completed. Result: {json.dumps(result, ensure_ascii=False)}"
-                    
-                    # Add the tool call result to history with clear status
                     self.agent.add_message(
                         MessageHistory(
                             role="assistant",
                             content=formatted_result
                         )
                     )
-
-                    # # Save tool execution results to RAG memory for future retrieval
-                    # if self.enable_rag and self.rag_service:
-                    #     try:
-                    #         self.rag_service.add_document(
-                    #             f"Tool {tool_call.name} executed with result: {str(result)}", 
-                    #             doc_type="tool_execution",
-                    #             metadata={
-                    #                 "tool_name": tool_call.name,
-                    #                 "arguments": tool_call.arguments,
-                    #                 "result": result
-                    #             }
-                    #         )
-                    #     except Exception as e:
-                    #         log(f"RAG memory save error: {str(e)}", 'warning', __name__)
-
         finally:
             self.running = False

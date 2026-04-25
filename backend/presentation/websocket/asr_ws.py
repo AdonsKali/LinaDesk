@@ -1,7 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
 import uuid
-from typing import Dict, Callable, Union
-from backend.core.schemas.client_schema import MessageClientSchema
+from typing import Dict, Callable
 import json
 
 from .base_ws import BaseWebSocketHandler
@@ -10,7 +9,7 @@ from logger import log
 
 
 class ASRWebSocketHandler(BaseWebSocketHandler):
-    """WebSocket хендлер для ASR - только отправка/прием"""
+    """WebSocket хендлер для ASR"""
     
     def __init__(self):
         super().__init__()
@@ -40,26 +39,20 @@ class ASRWebSocketHandler(BaseWebSocketHandler):
     async def _message_loop(self, client_id: str, controller: ASRController):
         """Цикл обработки сообщений - обработка любого типа сообщений"""
         while True:
-            # Получаем любое сообщение (байты или текст)
             connection = self.active_connections.get(client_id)
             if not connection:
-                continue
-                
+                break
+                    
             try:
-                # Прямое получение данных из WebSocket для определения типа
                 message = await connection.receive()
-                
-                # Определяем тип сообщения
                 if message['type'] == 'websocket.receive':
                     if 'bytes' in message:
-                        # Это бинарное сообщение (аудио данные)
                         audio = message['bytes']
                         if audio:
                             result = controller.handle_audio_chunk(audio) 
                             if result:
                                 await self.send_json(client_id, {"type": result.type, "content": result.content})
                     elif 'text' in message:
-                        # Это текстовое сообщение (JSON)
                         try:
                             data = json.loads(message['text'])
                             if data:
@@ -78,13 +71,18 @@ class ASRWebSocketHandler(BaseWebSocketHandler):
                         except json.JSONDecodeError as e:
                             log(f"Error decoding JSON: {e}", 'error', __name__)
             
+            except WebSocketDisconnect:
+                await self._cleanup(client_id)
+                break  
             except Exception as e:
+                if "disconnect message has been received" in str(e):
+                    await self._cleanup(client_id)
+                    break
                 log(f"Error processing message: {e}", 'error', __name__)
                 continue
     
     async def _cleanup(self, client_id: str):
         """Очистка ресурсов"""
         if client_id in self.controllers:
-            # Очистка ресурсов контроллера
             del self.controllers[client_id]
         await self.disconnect(client_id)
