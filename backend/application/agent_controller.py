@@ -16,13 +16,14 @@ from backend.core.schemas.message_schema import MessageHistory
 from backend.application.interfaces.inferenceABC import InferenceABC
 from backend.core.agent.agent import Agent
 from backend.core.schemas.tool_schema import ToolCall
-from logger import log
 from backend.application.interfaces.rag_abc import RAGABC
+from backend.application.interfaces.tool_managerABC import ToolManagerABC
+from logger import log
 
 
 class AgentController:
     def __init__(self, inference: InferenceABC, 
-                 tool_manager, 
+                 tool_manager: ToolManagerABC, 
                  agent: Agent, 
                  rag_service: RAGABC,
                  enable_rag=True
@@ -41,7 +42,6 @@ class AgentController:
     def reset(self):
         self.agent.reset()
         self.running = False
-
 
     async def response(self, prompt: str) -> AsyncGenerator:
 

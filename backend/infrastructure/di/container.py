@@ -1,8 +1,9 @@
 from dependency_injector import containers, providers
 from backend.core.agent.agent import Agent
-from backend.infrastructure.services import LlamaCppInference, VoskRecognizer
-from backend.infrastructure.services.RAG.rag_service import RAGService
-from backend.infrastructure.tools.manager import ToolManager
+from backend.infrastructure.services import LlamaCppInference
+from backend.infrastructure.services import VoskRecognizer
+from backend.infrastructure.services import RAGService
+from backend.infrastructure.services import ToolManager
 from backend.application.agent_controller import AgentController
 from backend.application.asr_controller import ASRController
 

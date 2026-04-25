@@ -11,7 +11,7 @@ HEADERS = {
 }
 
 
-def duckduckgo_search_with_rich_snippets(query: str, num_results: int = 5) -> Dict[str, Any]:
+def duckduckgo_search_with_rich_snippets(query: str, num_results: int = 5) -> ToolSchemaOut:
     """Поиск в интернете
     Args:
         query: запрос

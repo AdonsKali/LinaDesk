@@ -48,7 +48,7 @@ class AIShellController:
 
     # ================= PUBLIC =================
 
-    def execute(self, command: str, timeout=20.0) -> dict:
+    def execute(self, command: str, timeout=20.0) -> ToolSchemaOut:
         """
         Execute command safely and return JSON-like result
         """

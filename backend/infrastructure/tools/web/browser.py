@@ -1,8 +1,7 @@
 import webbrowser
 from backend.core.schemas import ToolSchemaOut
-from typing import Dict, Any
 
-def open_link(path: str) -> Dict[str, Any]:
+def open_link(path: str) -> ToolSchemaOut:
     """Открытие файла или ссылки
     
     Args: 
@@ -17,5 +16,8 @@ def open_link(path: str) -> Dict[str, Any]:
     except Exception as e:
         return ToolSchemaOut(
             status='error',
-            msg=e
+            msg=str(e)
+        )
+    return ToolSchemaOut(
+            status='ok',
         )

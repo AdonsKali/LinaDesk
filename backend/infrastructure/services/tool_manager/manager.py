@@ -1,9 +1,10 @@
-from .system import *
-from .web import *
+from ...tools.system import *
+from ...tools.web import *
 from backend.core.schemas import ToolSchemaOut
+from backend.application.interfaces.tool_managerABC import ToolManagerABC
 
 
-class ToolManager():
+class ToolManager(ToolManagerABC):
     def __init__(self):
         super().__init__()
         self.cmd_ps = AIShellController(
@@ -21,7 +22,7 @@ class ToolManager():
             }
                 
         
-    def toolsConvert(self, toolOut: ToolSchemaOut | dict):
+    def toolsConvertJSON(self, toolOut: ToolSchemaOut | dict):
         if isinstance(toolOut, dict):
             return toolOut
         else:
@@ -30,12 +31,9 @@ class ToolManager():
 
     def execute(self, name, args):
         result = self.tools[name](**args)
-        return self.toolsConvert(result)
+        return self.toolsConvertJSON(result)
     
     def get_tools(self, tool_names):
-        """
-        Returns a list of tools by name
-        """
         result = []
         for name in tool_names:
             if name in self.tools:
