@@ -3,9 +3,10 @@ from backend.core.agent.agent import Agent
 from backend.infrastructure.services import LlamaCppInference
 from backend.infrastructure.services import VoskRecognizer
 from backend.infrastructure.services import RAGService
-from backend.infrastructure.services import ToolManager
 from backend.application.agent_controller import AgentController
 from backend.application.asr_controller import ASRController
+from backend.application.tool_manager import ToolManager
+
 
 
 class Container(containers.DeclarativeContainer):
@@ -20,14 +21,16 @@ class Container(containers.DeclarativeContainer):
     )
     
     config = providers.Configuration()
-    
     tool_manager = providers.Singleton(ToolManager)
+    
     rag_service = providers.Singleton(
         RAGService,
         model_name=config.rag_model_path,
     )
     
-    agent = providers.Factory(Agent)
+    agent = providers.Factory(Agent,
+        yaml_config="chibi.yaml"
+    )
     
     inference = providers.Singleton(
         LlamaCppInference,

@@ -1,2 +1,2 @@
-from .web import *
-from .system import *
+from .plugins.windows import *
+from .plugins.windows import *

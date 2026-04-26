@@ -8,5 +8,8 @@ class MessageHistory:
     role: Literal["system", "user", "assistant"]
     content: str | dict | list
 
+    def __str__(self):
+        return f"{self.role}: {self.content}"
+
 
 

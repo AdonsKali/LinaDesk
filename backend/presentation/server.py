@@ -4,7 +4,6 @@ from dependency_injector.wiring import inject, Provide
 from backend.infrastructure.di.container import Container
 from backend.presentation.websocket.agent_ws import AgentWebSocketHandler
 from backend.presentation.websocket.asr_ws import ASRWebSocketHandler
-from logger import log
 
 
 def create_app() -> FastAPI:

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from backend.presentation.server import create_app
 from backend.infrastructure.config import Config
 from backend.infrastructure.di.container import Container
+from backend.infrastructure.tools.plugins.windows import *
 from logger import log
 
 
@@ -24,7 +25,7 @@ async def lifespan(app: FastAPI):
     container.recognizer()  
 
     log("Initializing Tool Manager...", 'info', __name__)
-    container.tool_manager()  
+    container.tool_manager()
     
     log("Initializing RAG service...", 'info', __name__)
     container.rag_service()

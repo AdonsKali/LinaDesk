@@ -31,7 +31,6 @@ class BaseWebSocketHandler:
     async def send_json(self, client_id: str, data: dict):
         """Отправка JSON"""
         if client_id in self.active_connections:
-            log(data, 'info', __name__)
             await self.active_connections[client_id].send_json(data)
     
     async def receive_json(self, client_id: str) -> Optional[Dict[str, Any]]:

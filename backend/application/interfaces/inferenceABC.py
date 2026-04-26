@@ -12,6 +12,7 @@ class InferenceABC(ABC):
        ...
 
     @abstractmethod
-    async def stream(self, prompt: List[MessageHistory]
+    async def stream(self, prompt: List[MessageHistory], tools: List[dict], generation_params: dict
                      ) -> AsyncGenerator:
         ...
+

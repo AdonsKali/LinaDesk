@@ -1,8 +1,13 @@
 name: coder
 system_prompt: |
-  You are helpful and professional coder assistant.
+  You are helpful and professional coder AI agent.
 tools:
-  - write_file
   - search
-max_steps: 8
-temperature: 0.2
+  - powershell
+  - open_link
+  - mk_file
+generation_params:
+  max_tokens: 1024
+  temperature: 0.6
+  top_p: 0.4
+  top_k: 30

@@ -1,5 +1,5 @@
 import json
-from typing import AsyncGenerator, List, Union
+from typing import AsyncGenerator, List
 
 from backend.application.interfaces.inferenceABC import InferenceABC
 import asyncio
@@ -12,7 +12,6 @@ from backend.core.schemas.streaming import (
 )
 from backend.core.schemas.message_schema import MessageHistory
 from backend.core.schemas.tool_schema import ToolCall
-from .functions import tools
 from llama_cpp import Llama
 
 
@@ -36,24 +35,21 @@ class LlamaCppInference(InferenceABC):
 
     def generate(self, prompt: List[MessageHistory]) -> str:
         return "Generate method is not realized yet"
+    
 
     async def stream(
         self,
-        prompt: List[MessageHistory]
+        prompt: List[MessageHistory],
+        tools: List[dict],
+        generation_params: dict,
     ) -> AsyncGenerator:
-
         try:
-
             response = self.llm.create_chat_completion(
                 messages=prompt, # type: ignore
                 tools=tools,  # type: ignore
                 stream=True,
                 tool_choice="auto",
-                max_tokens=2048,
-                temperature=0.7,
-                top_p=0.8,
-                top_k=20,
-                min_p=0.0,
+                **generation_params
             )
 
             tool_buffer = ""
