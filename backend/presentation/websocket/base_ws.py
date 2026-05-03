@@ -1,8 +1,9 @@
 from fastapi import WebSocket
 from typing import Dict, Optional, Any
 import json
-from backend.core.schemas.client_schema import MessageClientSchema
-from logger import log
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 
 class BaseWebSocketHandler:
@@ -16,17 +17,17 @@ class BaseWebSocketHandler:
         try:
             await websocket.accept()
             self.active_connections[client_id] = websocket
-            log(f"Client {client_id} connected", 'info', __name__)
+            log.info(f"Client {client_id} connected")
             return True
         except Exception as e:
-            log(f"Connection error: {e}", 'error', __name__)
+            log.error(f"Connection error: {e}")
             return False
     
     async def disconnect(self, client_id: str):
         """Отключение клиента"""
         if client_id in self.active_connections:
             del self.active_connections[client_id]
-            log(f"Client {client_id} disconnected", 'info', __name__)
+            log.info(f"Client {client_id} disconnected")
     
     async def send_json(self, client_id: str, data: dict):
         """Отправка JSON"""

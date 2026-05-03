@@ -26,8 +26,8 @@ class ClientAction:
 
 @dataclass
 class ClientToolCall:
-    type: Literal['tool_call']
-    data: dict
+    type: Literal['tool_call', 'tool_call_complete']
+    data: dict | None
 
 
 @dataclass

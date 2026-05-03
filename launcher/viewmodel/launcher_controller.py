@@ -1,12 +1,14 @@
 import subprocess
 from typing import Optional
-from logger import log
 from ..model import LauncherModel
 from PySide6.QtCore import QObject, Signal, QTranslator
 from PySide6.QtWidgets import QApplication
 from launcher.server_manager import ServerManager
 from launcher.client_manager import ClientManager
 import configparser
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 class ViewLauncher(QObject):
 
@@ -52,7 +54,7 @@ class ViewLauncher(QObject):
         # self.server_pid_changed.connect(self.check_server_process)
         # self.client_pid_changed.connect(self.check_client_process)
 
-        self.server_manager.server_error.connect(lambda msg: log(f"Server error: {msg}", "error", __name__))
+        self.server_manager.server_error.connect(lambda msg: log.error(f"Server error: {msg}"))
 
         self.translator = QTranslator(QApplication.instance())
 
@@ -60,7 +62,7 @@ class ViewLauncher(QObject):
         self.load_all()
 
     def gpu(self, state: bool):
-        state = int(state)  
+        state = int(state)   #type: ignore
         if self.model.on_gpu != state:
             self.model.on_gpu = state
             self.use_gpu_changed.emit(state)  
@@ -148,12 +150,12 @@ class ViewLauncher(QObject):
 
     def _apply_language(self):
         app = QApplication.instance()
-        app.removeTranslator(self.translator)
+        app.removeTranslator(self.translator) #type: ignore
         file_path = f'launcher/model/languages/{self.model.language}/launcher.qm'
         if self.translator.load(file_path) and self.model.language != 'en':
-            app.installTranslator(self.translator)
+            app.installTranslator(self.translator) #type: ignore
         elif self.model.language != 'en':
-            log(f"Language file not found: {file_path}", "warning", __name__)
+            log.warning(f"Language file not found: {file_path}")
         self.language_changed.emit()
 
 
@@ -161,12 +163,14 @@ class ViewLauncher(QObject):
         try:
             self.server_manager.start()
         except Exception as e:
-            log(f"Error starting server: {e}", "error", __name__)
+            log.error(f"Error starting server: {e}")
 
     
     def _start_app(self):
-        self.client_manager.start(self.model.language, bool(self.model.on_debug))
-
+        try:
+            self.client_manager.start(self.model.language, bool(self.model.on_debug))
+        except Exception as e:
+            log.error(f"Error starting client: {e}")
     def _stop_app(self):
         self.client_manager.stop()
 
@@ -174,7 +178,7 @@ class ViewLauncher(QObject):
         try:
             self.server_manager.stop()
         except Exception as e:
-            log(f"Error stopping server: {e}", "error", __name__)
+            log.error(f"Error stopping server: {e}")
 
     def is_app_running(self):
         return (

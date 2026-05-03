@@ -4,7 +4,9 @@ from typing import Dict, Callable
 from backend.core.schemas.client_schema import ClientComplete, ClientToolCall, ClientToken, ClientError
 from .base_ws import BaseWebSocketHandler
 from backend.application.agent_controller import AgentController
-from logger import log
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 
 class AgentWebSocketHandler(BaseWebSocketHandler):
@@ -39,7 +41,7 @@ class AgentWebSocketHandler(BaseWebSocketHandler):
         except WebSocketDisconnect:
             await self._cleanup(client_id)
         except Exception as e:
-            log(f"Error in agent WebSocket: {e}", 'error', __name__)
+            log.error(f"Error in agent WebSocket: {e}")
             await self._cleanup(client_id)
     
     async def _message_loop(self, client_id: str, controller: AgentController):

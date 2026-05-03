@@ -8,7 +8,7 @@ def main():
     debug = "--reload" if len(sys.argv) > 1 and sys.argv[1] == "--debug" else ""
     cmd = [
         sys.executable, "-m", "uvicorn",
-        "backend.run:create_application",
+        "backend.main:create_application",
         "--host", host,
         "--port", port,
         "--log-level", "debug" if debug else "info",

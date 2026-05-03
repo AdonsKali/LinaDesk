@@ -1,6 +1,8 @@
 from backend.core.schemas.client_schema import MessageClientSchema
 from .interfaces.recognizeABC import RecognizeABC
-from logger import log
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 
 class ASRController:
@@ -38,7 +40,7 @@ class ASRController:
             
         self.is_active = False
         final_text = self.recognizer.finish()
-        log("Recognition completed", source=__name__)
+        log.info("Recognition completed")
         return MessageClientSchema(
             type='complete',
             content={

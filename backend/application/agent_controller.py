@@ -18,7 +18,9 @@ from backend.core.agent.agent import Agent
 from backend.core.schemas.tool_schema import ToolCall
 from backend.application.interfaces.rag_abc import RAGABC
 from backend.application.tool_manager import ToolManager
-from logger import log
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 
 class AgentController:
@@ -155,7 +157,7 @@ class AgentController:
                 current_tool_calls = [(tc.name, tuple(sorted(tc.arguments.items()))) for tc in tool_calls]
                 
                 if current_tool_calls == previous_tool_calls:
-                    log(f"Detected repeated tool calls: {current_tool_calls}, stopping", 'warning', __name__)
+                    log.warning(f"Detected repeated tool calls: {current_tool_calls}, stopping")
                     yield ClientError(
                         type="error",
                         message="Stopping to prevent infinite loop: detected repeated tool calls"
@@ -166,7 +168,7 @@ class AgentController:
                 
                 for tool_call in tool_calls:
                     try:
-                        log(f"Executing tool: {tool_call.name} with args: {tool_call.arguments}", 'debug', __name__)
+                        log.debug(f"Executing tool: {tool_call.name} with args: {tool_call.arguments}")
                         yield ClientToolCall(type="tool_call", data={'name': tool_call.name, 'arguments': tool_call.arguments})
                     
                         result = self.tool_manager.execute(
@@ -174,8 +176,8 @@ class AgentController:
                             **tool_call.arguments
                         )
 
-                        log(f"Tool call results: status={result.status}, msg={result.msg}", 'debug', __name__)
-
+                        log.info(f"Tool call results: status={result.status}, msg={result.msg}")
+                        yield ClientToolCall(type='tool_call_complete', data=None)
                         self.agent.add_message(
                             MessageHistory(
                                 role="assistant",
@@ -184,7 +186,7 @@ class AgentController:
                         )
                     except Exception as e:
                         error_msg = f"Tool execution error: {str(e)}"
-                        log(error_msg, 'error', __name__)
+                        log.error(error_msg)
                         self.agent.add_message(
                             MessageHistory(
                                 role="assistant",
@@ -195,7 +197,7 @@ class AgentController:
                         return
 
         finally:
-            log(self.agent.history, 'info', __name__)
+            log.info(self.agent.history)
             self.running = False
 
     def _format_tool_result(self, tool_name: str, result) -> str:

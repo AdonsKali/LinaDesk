@@ -6,7 +6,7 @@ app/tests
 backend/infrastructure/models/*
 backend/infrastructure/data
 !/backend/infrastructure/models/vosk-model
-log.txt
+/logs
 main.build
 main.dist
 *__pycache__

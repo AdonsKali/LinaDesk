@@ -1,11 +1,14 @@
 import pickle
-from logger import log
+from utils.logger import log
 from typing import List, Dict, Optional, Union
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from backend.application.interfaces.rag_abc import RAGABC
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 
 class RAGService(RAGABC):
@@ -26,14 +29,14 @@ class RAGService(RAGABC):
         self.index_path = Path("backend/infrastructure/data/rag_index.faiss")
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
         
-        log(f"Loading embedding model: {model_name}", 'info', __name__)
+        log.info(f"Loading embedding model: {model_name}")
         self.encoder = SentenceTransformer(model_name)
         self.documents: List[Dict[str, Union[str, Dict]]] = []
         self.embeddings: Optional[np.ndarray] = None
         if self.index_path.exists():
             self.load_index()
         else:
-            log(f"No existing index found at {index_path}. Creating new index.")
+            log.info(f"No existing index found at {index_path}. Creating new index.")
     
     def add_document(self, content: str, metadata: Optional[Dict] = None, doc_id: Optional[str] = None) -> str:
         """
@@ -63,7 +66,7 @@ class RAGService(RAGABC):
         else:
             self.embeddings = np.vstack([self.embeddings, new_embedding])
         
-        log(f"Added document {doc_id} to index", 'info', __name__)
+        log.info(f"Added document {doc_id} to index")
         return doc_id
     
     def add_documents(self, documents: List[Dict[str, Union[str, Dict]]]) -> List[str]:
@@ -97,7 +100,7 @@ class RAGService(RAGABC):
         else:
             self.embeddings = np.vstack([self.embeddings, embeddings])
         
-        log(f"Added {len(documents)} documents to index", 'info', __name__)
+        log.info(f"Added {len(documents)} documents to index")
         return doc_ids
     
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Union[str, Dict, float]]]:
@@ -113,7 +116,7 @@ class RAGService(RAGABC):
             [{"content": "...", "metadata": {}, "score": 0.x}, ...]
         """
         if not self.documents or self.embeddings is None:
-            log("No documents in index", 'warning', __name__)
+            log.warning("No documents in index")
             return []
         
         query_embedding = self.encoder.encode([query])
@@ -132,7 +135,7 @@ class RAGService(RAGABC):
                     "score": score
                 })
         
-        log(f"Found {len(results)} results for query: {query[:50]}...", 'info', __name__)
+        log.info(f"Found {len(results)} results for query: {query[:50]}...")
         return results
     
     def get_document(self, doc_id: str) -> Optional[Dict[str, Union[str, Dict]]]:
@@ -168,10 +171,10 @@ class RAGService(RAGABC):
                 else:
                     self.embeddings = None
                 
-                log(f"Removed document {doc_id}", 'info', __name__)
+                log.info(f"Removed document {doc_id}")
                 return True
         
-        log(f"Document {doc_id} not found for removal", 'warning', __name__)
+        log.warning(f"Document {doc_id} not found for removal")
         return False
     
     def save_index(self):
@@ -182,7 +185,7 @@ class RAGService(RAGABC):
         }
         with open(self.index_path, "wb") as f:
             pickle.dump(data, f)
-        log(f"Saved index with {len(self.documents)} documents to {self.index_path}, 'info', __name__")
+        log.info(f"Saved index with {len(self.documents)} documents to {self.index_path}")
     
     def load_index(self):
         """Load the index from disk"""
@@ -193,9 +196,9 @@ class RAGService(RAGABC):
             self.documents = data["documents"]
             self.embeddings = data["embeddings"]
             
-            log(f"Loaded index with {len(self.documents)} documents from {self.index_path}", 'info', __name__)
+            log.info(f"Loaded index with {len(self.documents)} documents from {self.index_path}")
         except Exception as e:
-            log(f"Failed to load index from {self.index_path}: {e}", 'error', __name__)
+            log.error(f"Failed to load index from {self.index_path}: {e}")
             self.documents = []
             self.embeddings = None
     
@@ -203,7 +206,7 @@ class RAGService(RAGABC):
         """Clear all documents from the index"""
         self.documents = []
         self.embeddings = None
-        log("Cleared RAG index", 'info', __name__)
+        log.info("Cleared RAG index")
         if self.index_path.exists():
             self.index_path.unlink()
     

@@ -19,7 +19,7 @@ class ClientManager(QObject):
         try:
             python_path = sys.executable
             client_script = "client/main.py"
-            work_dir = os.path.abspath('.')
+            work_dir = os.getcwd()
             
             args = [
                 python_path,
@@ -34,7 +34,7 @@ class ClientManager(QObject):
                 # При отладке запускаем в отдельном окне консоли на Windows
                 self.process = subprocess.Popen(
                     args,
-                    cwd=work_dir,
+                    cwd=os.getcwd(),
                     creationflags=subprocess.CREATE_NEW_CONSOLE
                 )
             elif debug and sys.platform != "win32":
@@ -55,7 +55,7 @@ class ClientManager(QObject):
                 if sys.platform == "win32":
                     self.process = subprocess.Popen(
                         args,
-                        cwd=work_dir,
+                        cwd=os.getcwd(),
                         creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
                     )
                 else:

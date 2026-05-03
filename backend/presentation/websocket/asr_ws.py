@@ -5,7 +5,9 @@ import json
 
 from .base_ws import BaseWebSocketHandler
 from backend.application.asr_controller import ASRController
-from logger import log
+from utils.logger import get_logger
+
+log = get_logger(__name__)
 
 
 class ASRWebSocketHandler(BaseWebSocketHandler):
@@ -33,7 +35,7 @@ class ASRWebSocketHandler(BaseWebSocketHandler):
         except WebSocketDisconnect:
             await self._cleanup(client_id)
         except Exception as e:
-            log(f"Error: {e}", 'error', __name__)
+            log.error(f"Error: {e}")
             await self._cleanup(client_id)
     
     async def _message_loop(self, client_id: str, controller: ASRController):
@@ -69,7 +71,7 @@ class ASRWebSocketHandler(BaseWebSocketHandler):
                                         await self.send_json(client_id, {"type": result.type, "content": result.content})
                                         
                         except json.JSONDecodeError as e:
-                            log(f"Error decoding JSON: {e}", 'error', __name__)
+                            log.error(f"Error decoding JSON: {e}")
             
             except WebSocketDisconnect:
                 await self._cleanup(client_id)
@@ -78,7 +80,7 @@ class ASRWebSocketHandler(BaseWebSocketHandler):
                 if "disconnect message has been received" in str(e):
                     await self._cleanup(client_id)
                     break
-                log(f"Error processing message: {e}", 'error', __name__)
+                log.error(f"Error processing message: {e}")
                 continue
     
     async def _cleanup(self, client_id: str):
