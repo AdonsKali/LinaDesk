@@ -29,7 +29,7 @@ class Container(containers.DeclarativeContainer):
     )
     
     agent = providers.Factory(Agent,
-        yaml_config="chibi.yaml"
+        yaml_config=config.agent_ymal_file,
     )
     
     inference = providers.Singleton(
@@ -51,7 +51,6 @@ class Container(containers.DeclarativeContainer):
         tool_manager=tool_manager,
         agent=agent,
         rag_service=rag_service,
-        enable_rag=True
     )
     
     asr_controller = providers.Factory(

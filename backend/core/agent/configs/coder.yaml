@@ -6,6 +6,8 @@ tools:
   - powershell
   - open_link
   - mk_file
+max_steps: 10
+RAG: false
 generation_params:
   max_tokens: 1024
   temperature: 0.6

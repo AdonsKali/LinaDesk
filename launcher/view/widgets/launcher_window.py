@@ -116,13 +116,38 @@ class LauncherWindow(QWidget):
     
     def setup_connections(self):
         """Настройка соединений с сервером"""
-        self.viewmodel.server_manager.server_started.connect(self.on_server_started)
-        self.viewmodel.server_manager.server_stopped.connect(self.on_server_stopped)
-        self.viewmodel.server_manager.server_error.connect(self.on_server_error)
-
+        # Используем сигналы из viewmodel (которые проксируют сигналы process_manager)
+        self.viewmodel.server_started.connect(self.on_server_started)
+        self.viewmodel.server_stopped.connect(self.on_server_stopped)
+        self.viewmodel.server_error.connect(self.on_server_error)
+        self.viewmodel.client_started.connect(self.on_client_started)
+        self.viewmodel.client_stopped.connect(self.on_client_stopped)
+        self.viewmodel.client_error.connect(self.on_client_error)
 
         self.viewmodel.language_changed.connect(self.retranslate_ui)
 
+    def on_client_started(self):
+        """Клиент успешно запущен"""
+        self.btn_app.setText(self.tr("App running"))
+        self.btn_app.setEnabled(False)
+        self.tray.showMessage(
+            "Lina AI",
+            self.tr("Application started successfully"),
+            QSystemTrayIcon.MessageIcon.Information,
+            2000
+        )
+    
+    def on_client_stopped(self):
+        """Клиент остановлен"""
+        self.btn_app.setText(self.tr("Start app"))
+        self.btn_app.setEnabled(True)
+    
+    def on_client_error(self, error_msg):
+        """Ошибка при запуске клиента"""
+        self.btn_app.setText(self.tr("Error"))
+        self.btn_app.setEnabled(True)
+        QMessageBox.critical(self, self.tr("Error"), 
+                           self.tr("Failed to start application: ") + error_msg)
     
     def paintEvent(self, event):
         """Отрисовка фона с закругленными углами"""
@@ -140,17 +165,15 @@ class LauncherWindow(QWidget):
         else:
             painter.fillRect(self.rect(), QColor(30, 30, 30, 200))
     
-    def show_window(self,):
+    def show_window(self):
         self.show()
         self.raise_()
         self.activateWindow()
-
 
     def on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.show_window()
     
-
     def on_server_started(self):
         self.btn_srv.setText(self.tr("Success"))
         self.btn_srv.setEnabled(False)
@@ -166,7 +189,7 @@ class LauncherWindow(QWidget):
         self.btn_srv.setEnabled(True)
 
     def quit_app(self):
-        self.viewmodel.kill_all.emit()
+        self.viewmodel.quit_lina.emit()
     
     def on_server_error(self, error_msg):
         self.btn_srv.setText(self.tr("Error"))
@@ -174,7 +197,7 @@ class LauncherWindow(QWidget):
         QMessageBox.critical(self, self.tr("Error starting server. Check your settings."), error_msg)
     
     def start_server(self):
-        if self.viewmodel.server_manager.is_running():
+        if self.viewmodel.is_server_running():
             return
         
         self.btn_srv.setText(self.tr("Starting"))
@@ -182,7 +205,7 @@ class LauncherWindow(QWidget):
         self.viewmodel.start_server.emit()
     
     def start_app(self):
-        if not self.viewmodel.server_manager.is_running():
+        if not self.viewmodel.is_server_running():
             reply = QMessageBox.question(
                 self,
                 self.tr("Warning"),
@@ -197,7 +220,7 @@ class LauncherWindow(QWidget):
         self._open_app()
     
     def _open_app_after_server(self):
-        if self.viewmodel.server_manager.is_running():
+        if self.viewmodel.is_server_running():
             self.hide()
             self._open_app()
         else:
@@ -217,15 +240,11 @@ class LauncherWindow(QWidget):
         event.ignore()
         self.hide()
 
-
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_offset = event.pos()
-
 
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton:
             new_pos = self.pos() + (event.pos() - self.drag_offset)
             self.move(new_pos)
-
-    

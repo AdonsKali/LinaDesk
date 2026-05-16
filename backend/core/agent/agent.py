@@ -5,12 +5,14 @@ from paths import CONFIGS
 
 
 class Agent():
-    def __init__(self, yaml_config: str = "chibi.yaml"):
+    def __init__(self, yaml_config: str):
         super().__init__() 
         self.name: str
         self._tools: List[str]
         self._system_prompt: str = ""
         self._generation_params = {}
+        self._max_steps: int
+        self._rag: bool
         self.load_config(yaml_config)
 
         self._history: List[MessageHistory] = []
@@ -39,11 +41,6 @@ class Agent():
     def remove_message(self, message: MessageHistory):
         self._history.remove(message)
 
-    @property
-    def history(self) -> List[MessageHistory]:
-        return self._history
-
-
     def get_last(self) -> MessageHistory:
         return self._history[-1]
     
@@ -60,6 +57,8 @@ class Agent():
             self._tools = [tool for tool in config['tools']]
             self.name = config['name']
             self._system_prompt = config['system_prompt']
+            self._rag = config['RAG']
+            self._max_steps = config['max_steps']
 
             self._generation_params['max_tokens'] = config['generation_params']['max_tokens']
             self._generation_params['temperature'] = config['generation_params']['temperature']
@@ -73,4 +72,16 @@ class Agent():
     @property
     def tools(self) -> List[str]:
         return self._tools
+    
+    @property
+    def history(self) -> List[MessageHistory]:
+        return self._history
+
+    @property
+    def max_steps(self) -> int:
+        return self._max_steps
+    
+    @property
+    def rag(self) -> bool:
+        return self._rag
 

@@ -20,6 +20,8 @@ class Config(BaseSettings):
     debug: bool = Field(default=False, alias="DEBUG")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     
+    agent_ymal_file: str = Field(default="chibi.yaml", alias="AGENT_YAML_FILE")
+    
     class Config:
         env_file = ".env"
         case_sensitive = False

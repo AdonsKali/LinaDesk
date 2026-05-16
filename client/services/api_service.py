@@ -113,7 +113,7 @@ class ApiService(BaseService):
                         on_error=self._on_agent_error,
                         on_close=self._on_agent_close
                     )
-                    self.agent_ws.run_forever(ping_interval=80, ping_timeout=60)
+                    self.agent_ws.run_forever(ping_interval=480, ping_timeout=460)
                 except Exception as e:
                     logger.error(f"Agent connection error: {e}")
                 
@@ -137,7 +137,7 @@ class ApiService(BaseService):
                         on_error=self._on_recognition_error,
                         on_close=self._on_recognition_close
                     )
-                    self.recognition_ws.run_forever(ping_interval=10, ping_timeout=5)
+                    self.recognition_ws.run_forever(ping_interval=80, ping_timeout=60)
                 except Exception as e:
                     logger.error(f"Recognition connection error: {e}")
                 

@@ -2,11 +2,6 @@ from typing import Any, Dict, Literal, Optional, Union
 from dataclasses import dataclass
 
 @dataclass
-class ClientToken:
-    type: Literal["token"]
-    content: str
-
-@dataclass
 class ClientComplete:
     type: Literal["complete"]
     

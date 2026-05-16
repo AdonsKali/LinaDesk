@@ -12,4 +12,3 @@ echo   ^|        \^|   ^| ^|  ^|    ^|  ^|\ (_ o _) /        \ (_ o _) / ^|   ^|
 echo   `--------`'---' '--'    '--' '.(_,_).'          '.(_,_).'  '---'         
 setlocal
 "%~dp0\.venv\Scripts\python.exe" -m main
-pause   

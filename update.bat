@@ -10,7 +10,7 @@ echo (  .  .-'   ^|   ^| ^| (_ o _)  ^|.'   _    ^|        ' (`. _` /^|^|   ^|  
 echo  `-'`-'^|___ ^|   ^| ^|  (_,_)\  ^|^|  _( )_  ^|        ^| (_ (_) _)^|   ^|     ^|  (_.\.' / ^|  _( )_  ^|  (_(=)_)  \  `-'    / 
 echo   ^|        \^|   ^| ^|  ^|    ^|  ^|\ (_ o _) /         \ /  . \ //   )     ^|       .'  \ (_ o _) /   (_I_)    \       /  
 echo   `--------`'---' '--'    '--' '.(_,_).'           ``-'`-'' `---'     '-----'`     '.(_,_).'    '---'     `'-..-'   
-                                                                                                                    
+                                                                                                              
 
 where python >nul 2>nul
 if errorlevel 1 (
@@ -19,7 +19,21 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+echo.
 
+where git >nul 2>nul
+if errorlevel 1 (
+    echo [WARN] Git не найден в PATH. Обновление файлов из репозитория пропущено.
+    echo Установите Git или добавьте его в PATH.
+) else (
+    echo [INFO] Обновление файлов из репозитория...
+    git pull
+    if errorlevel 1 (
+        echo [ERROR] Не удалось выполнить git pull. Проверьте подключение к интернету и права доступа.
+    ) else (
+        echo [OK] Репозиторий обновлён.
+    )
+)
 echo.
 
 if exist ".venv\Scripts\activate.bat" (

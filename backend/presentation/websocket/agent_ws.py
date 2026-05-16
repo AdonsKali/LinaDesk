@@ -1,7 +1,8 @@
 from fastapi import WebSocket, WebSocketDisconnect
 import uuid
 from typing import Dict, Callable
-from backend.core.schemas.client_schema import ClientComplete, ClientToolCall, ClientToken, ClientError
+from backend.core.schemas.client_schema import ClientComplete, ClientToolCall, ClientError
+from backend.core.schemas.streaming import TokenChunk
 from .base_ws import BaseWebSocketHandler
 from backend.application.agent_controller import AgentController
 from utils.logger import get_logger
@@ -56,7 +57,7 @@ class AgentWebSocketHandler(BaseWebSocketHandler):
             
             if msg_type == "user_text":
                 async for data in controller.response(content):
-                    if isinstance(data, ClientToken):
+                    if isinstance(data, TokenChunk):
                         await self.send_json(client_id, {"type": data.type, "content": data.content})
                     elif isinstance(data, ClientToolCall):
                         await self.send_json(client_id, {"type": data.type, "content": data.data})
