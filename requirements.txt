@@ -13,4 +13,7 @@ websockets==14.0
 opencv-python==4.12.0.88
 bs4>=0.0.2
 psutil==7.2.2
+fastapi>=0.120.4
+uvicorn>=0.38.0
+websocket==0.2.1
 huggingface_hub>=0.20.0
