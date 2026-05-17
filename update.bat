@@ -34,7 +34,7 @@ if errorlevel 1 (
     if errorlevel 1 (
         echo [ERROR] Не удалось выполнить обновление. Проверьте подключение к интернету.
     ) else (
-        echo [OK] Обновлено.
+        echo [OK] Файлы обновлены.
     )
 )
 echo.
