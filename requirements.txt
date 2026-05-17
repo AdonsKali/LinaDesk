@@ -16,4 +16,5 @@ psutil==7.2.2
 fastapi>=0.120.4
 uvicorn>=0.38.0
 websocket==0.2.1
+dependency-injector==4.48.3
 huggingface_hub>=0.20.0

@@ -26,7 +26,7 @@ if errorlevel 1 (
     echo [WARN] Git не найден в PATH. Обновление файлов из репозитория пропущено.
     echo Установите Git или добавьте его в PATH.
 ) else (
-    echo [INFO] Принудительное обновление файлов из репозитория...
+    echo [INFO] Обновление файлов из репозитория...
     
     git fetch --all
     git reset --hard dev
