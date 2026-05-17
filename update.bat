@@ -28,9 +28,8 @@ if errorlevel 1 (
 ) else (
     echo [INFO] Принудительное обновление файлов из репозитория...
     
-    # Сбрасываем все локальные изменения
     git fetch --all
-    git reset --hard origin/main
+    git reset --hard dev
     
     if errorlevel 1 (
         echo [ERROR] Не удалось выполнить обновление. Проверьте подключение к интернету.
