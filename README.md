@@ -71,7 +71,7 @@ Lina AI предоставляет интуитивно понятный инт�
 #### 1. Клонирование репозитория:
 ```bash
 git clone -b dev https://github.com/AdonsKali/LinaDesk
-cd LinaAI
+cd LinaDesk
 ```
 
 #### 2. Установка зависимостей:
