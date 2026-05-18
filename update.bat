@@ -32,7 +32,8 @@ if errorlevel 1 (
 ) else (
     echo [%GREEN%INFO%RESET%] Updating files from repository...
     
-    git pull
+    git fetch --all >nul 2>&1
+    git reset --hard origin/dev >nul 2>&1
     
     if errorlevel 1 (
         echo [%RED%ERROR%RESET%] The update failed. Please check your internet connection.
@@ -60,9 +61,9 @@ echo Starting model download...
 echo.
 python -m pip cache purge
 
-echo╶┬╮╭─╮╭╮╷╭─╴
-echo │││ ││╰┤├╴ 
-echo╶┴╯╰─╯╵ ╵╰─╴
+echo ╶┬╮╭─╮╭╮╷╭─╴
+echo  │││ ││╰┤├╴ 
+echo ╶┴╯╰─╯╵ ╵╰─╴
 
 echo %GREEN%Now you can run the application via run.bat%RESET%
 
