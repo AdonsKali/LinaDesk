@@ -28,8 +28,7 @@ if errorlevel 1 (
 ) else (
     echo [INFO] Обновление файлов из репозитория...
     
-    git fetch --all
-    git reset --hard dev
+    git pull
     
     if errorlevel 1 (
         echo [ERROR] Не удалось выполнить обновление. Проверьте подключение к интернету.
