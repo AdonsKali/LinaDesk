@@ -20,10 +20,14 @@ def download_qwen3_model():
     
     repo_id = REPO_ID
     filename = FILE_NAME
-    target_model_path = models_dir / "model.gguf"
+    target_model_path = models_dir / "Qwen3-4B-Instruct-2507-Q5_K_S.gguf"
     
     print(f"Downloading model to: {models_dir}")
     print(f"File: {filename}")
+
+    if target_model_path.exists():
+        print(f"Model already exists at: {target_model_path}")
+        return True
     
     try:
         downloaded_file = hf_hub_download(
