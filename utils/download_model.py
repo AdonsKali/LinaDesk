@@ -15,7 +15,7 @@ except ImportError:
 REPO_ID = "unsloth/Qwen3-4B-Instruct-2507-GGUF"
 FILE_NAME = "Qwen3-4B-Instruct-2507-Q5_K_S.gguf"
 def download_qwen3_model():
-    models_dir = project_root / "backend" / "models"
+    models_dir = project_root / "backend" / "infrastructure" / "models"
     models_dir.mkdir(parents=True, exist_ok=True)
     
     repo_id = REPO_ID
