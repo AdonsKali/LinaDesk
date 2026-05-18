@@ -80,17 +80,21 @@ cd LinaDesk
 update.bat  # Для Windows
 ```
 
-#### 3. (Опционально) Установка CUDA для GPU-ускорения (NVIDIA):
+#### 3. (Опционально) Установка для GPU-ускорения (NVIDIA/AMD):
 ```bash
-# Удалите старую версию, если существует
+# Удалите старую версию (папку тоже), если существует
 pip uninstall llama-cpp-python -y
 
-# Клонируйте репозиторий для компиляции с CUDA
+# Клонируйте репозиторий для компиляции
 git clone --recursive https://github.com/abetlen/llama-cpp-python
 cd llama-cpp-python
 
-# Установите переменные сборки и соберите
+# Установите переменные сборки и соберите для CUDA
 $env:CMAKE_ARGS = "-DGGML_CUDA=ON -DLLAMA_BLAS=ON"  # Для PowerShell!
+$env:FORCE_CMAKE = "1"
+
+# Установите переменные сборки и соберите для AMD
+$env:CMAKE_ARGS = "--DGGML_HIPBLAS=ON -DLLAMA_BLAS=ON"  # Для PowerShell!
 $env:FORCE_CMAKE = "1"
 
 pip install -e . --no-build-isolation --no-cache-dir --force-reinstall
