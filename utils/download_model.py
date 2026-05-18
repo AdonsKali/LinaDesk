@@ -23,7 +23,6 @@ def download_qwen3_model():
     target_model_path = models_dir / "model.gguf"
     
     print(f"Downloading model to: {models_dir}")
-    print(f"Repository: {repo_id}")
     print(f"File: {filename}")
     
     try:
@@ -36,15 +35,6 @@ def download_qwen3_model():
         )
         
         print(f"Model successfully downloaded to: {downloaded_file}")
-        
-        if Path(downloaded_file).name != "model.gguf":
-            import shutil
-            shutil.copy2(downloaded_file, target_model_path)
-            print(f"Copied model to standard name: {target_model_path}")
-        else:
-            print(f"Model already named as expected: {downloaded_file}")
-        
-        print(f"\nDownload completed successfully!")
         print(f"Model location: {target_model_path}")
         
     except Exception as e:
