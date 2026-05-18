@@ -31,7 +31,6 @@ def download_qwen3_model():
             filename=filename,
             local_dir=models_dir,
             local_dir_use_symlinks=False,
-            resume_download=True
         )
         
         print(f"Model successfully downloaded to: {downloaded_file}")
