@@ -7,6 +7,9 @@ import threading
 from typing import Optional, List
 from enum import Enum
 from launcher.model.launcher_model import ProcessInfo
+from utils.logger import logger
+
+log = logger.get(__name__)
 
 class ProcessType(Enum):
     SERVER = "server"
@@ -29,7 +32,7 @@ class ProcessManager(QObject):
         }
         self.debug_mode = False
         self.host = "127.0.0.1"
-        self.port = 8000
+        self.port = "8000"
         self._server_health_timeout = 5000
     
     # Public API
@@ -71,7 +74,7 @@ class ProcessManager(QObject):
         for proc_type_str, pid in saved_pids.items():
             try:
                 proc_type = ProcessType(proc_type_str)
-                self._terminate_process_by_pid(pid, proc_type.value.identifier) #type: ignore
+                self._terminate_process_by_pid(pid, proc_type.value.isidentifier()) #type: ignore
             except ValueError:
                 continue
     
@@ -168,8 +171,12 @@ class ProcessManager(QObject):
     
     def _get_server_command(self) -> List[str]:
         """Build server command line"""
-        cmd = [sys.executable, "backend/run_server.py"]
+        cmd = [sys.executable, "-m", "uvicorn",
+            "backend.main:create_application",
+            "--host", self.host,
+            "--port", self.port,]
         if self.debug_mode:
+            log.debug("Starting server in debug mode")
             cmd.append("--debug")
         return cmd
     
@@ -177,6 +184,7 @@ class ProcessManager(QObject):
         """Build client command line"""
         cmd = [sys.executable, "client/main.py", "--lang", language]
         if self.debug_mode:
+            log.debug("Starting client in debug mode")
             cmd.append("--debug")
         return cmd
     

@@ -3,15 +3,20 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QTimer
-from app_coordinator import AppCoordinator
 from client.views.chibi_view import ChibiView
 from client.views.bubble_view import BubbleView
 from client.views.chat_view import ChatView
-from utils.logger import get_logger, setup
+from utils.logger import logger
+from argparse import ArgumentParser
+parser = ArgumentParser()
+logger.setup(app_name="client", 
+             log_dir="logs", 
+             debug= True if "--debug" in sys.argv else False,
+             clear_on_start=True)
+from app_coordinator import AppCoordinator
 
 
-setup(app_name="client", log_dir="logs", debug=False)
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 class ChibiApp:
     """Главное приложение"""

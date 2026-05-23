@@ -1,46 +1,51 @@
 from contextlib import asynccontextmanager
 import uvicorn
+import sys
 from fastapi import FastAPI
+from utils.logger import logger
+from argparse import ArgumentParser
+parser = ArgumentParser()
+logger.setup(app_name="client", 
+             log_dir="logs", 
+             debug= True if "--debug" in sys.argv else False,
+             clear_on_start=True)
+log = logger.get(__name__)
 from backend.presentation.server import create_app
 from backend.infrastructure.config import Config
 from backend.infrastructure.di.container import Container
 from backend.infrastructure.tools.plugins.windows import *
-from utils.logger import setup, get_logger
-
-setup(app_name="backend", log_dir="logs", debug=False)
-logger = get_logger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
-    logger.info("Starting Lina AI Server...")
+    log.info("Starting Lina AI Server...")
 
     config = Config()
     container = Container()
     container.config.from_pydantic(config)
     container.init_resources()
     
-    logger.info("Initializing LLM service...")
+    log.info("Initializing LLM service...")
     container.inference() 
     
-    logger.info("Initializing ASR service...")
+    log.info("Initializing ASR service...")
     container.recognizer()  
 
-    logger.info("Initializing Tool Manager...")
+    log.info("Initializing Tool Manager...")
     container.tool_manager()
     
-    logger.info("Initializing RAG service...")
+    log.info("Initializing RAG service...")
     container.rag_service()
     
     app.state.container = container
     
-    logger.info("Lina AI Server started successfully")
+    log.info("Lina AI Server started successfully")
     yield
     
-    logger.info("Shutting down Lina AI Server...")
+    log.info("Shutting down Lina AI Server...")
     container.shutdown_resources()
-    logger.info("Lina AI Server stopped")
+    log.info("Lina AI Server stopped")
 
 
 def create_application() -> FastAPI:

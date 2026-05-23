@@ -8,4 +8,5 @@ if __name__ == "__main__":
     app.setWindowIcon(QIcon("logo.ico"))
     from launcher import Launcher
     launcher = Launcher()
+    launcher.show()
     sys.exit(app.exec()) 

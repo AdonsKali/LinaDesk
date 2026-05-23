@@ -3,6 +3,9 @@ from PySide6.QtCore import QObject
 from client.core.event_bus import EventBus
 from client.core.events import Event
 from client.core.event_types import EventType
+from utils.logger import logger
+
+log = logger.get(__name__)
 
 class PositionService(QObject):
     """Сервис позиционирования UI элементов"""
@@ -75,6 +78,7 @@ class PositionService(QObject):
         # Корректировка
         bubble_x = max(0, min(bubble_x, self._screen_width - self._bubble_width))
         bubble_y = max(0, min(bubble_y, self._screen_height - self._bubble_height))
+        log.debug(f"Bubble position: {bubble_x}, {bubble_y}")
         
         position_type = f"{tail_horizontal}-{tail_vertical}"
         
@@ -91,6 +95,7 @@ class PositionService(QObject):
 
         chat_x = max(0, min(chat_x, self._screen_width - self._chat_width))
         chat_y = max(0, min(chat_y, self._screen_height - self._chat_height))
+        log.debug(f"Chat position: {chat_x}, {chat_y}")
         
         return int(chat_x), int(chat_y)
     
@@ -106,3 +111,4 @@ class PositionService(QObject):
             EventType.CHAT_POSITION_UPDATED,
             {'x': int(chat_x), 'y': int(chat_y)}
         ))
+        log.debug(f"Cibi position: {position_type} ({x}, {y})")

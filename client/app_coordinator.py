@@ -10,9 +10,9 @@ from client.viewmodels.chibi_viewmodel import ChibiViewModel
 from client.viewmodels.bubble_viewmodel import BubbleViewModel
 from client.viewmodels.chat_viewmodel import ChatViewModel
 from client.models.chibi_model import ChibiState, AnimationType
-from utils.logger import get_logger
+from utils.logger import logger
 
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 
 class AppCoordinator(QObject):

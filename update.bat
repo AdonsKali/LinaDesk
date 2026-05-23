@@ -55,11 +55,43 @@ echo.
 if exist "requirements.txt" (
     python -m pip install --upgrade -r requirements.txt
 )
+where nvidia-smi >nul 2>nul
+if %errorlevel%==0 (
+    echo [%GREEN%OK%RESET%] CUDA NVIDIA is installed
+    echo.
+    echo CUDA version:
+    nvidia-smi --query-gpu=driver_version,cuda_version --format=csv,noheader
+    echo.
+    set URL=https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.23-cu125/llama_cpp_python-0.3.23-py3-none-win_amd64.whl
+    set FILENAME=llama_cpp_python-0.3.23-py3-none-win_amd64.w
+
+    echo Download llama-cpp-python...
+    powershell -Command "Invoke-WebRequest -Uri %URL% -OutFile %FILENAME%"
+    if exist %FILENAME% (
+        echo Installation...
+        
+        pip install %FILENAME%
+        
+        if %errorlevel%==0 (
+            echo Complete!
+            python -c "from llama_cpp import Llama; print('Import check [OK]')"
+            del %FILENAME%
+        ) else (
+            echo [%RED%ERROR%REST%] while installing llama-cpp-python!
+        )
+    ) else (
+        echo [%RED%ERROR%RESET%] while downloading llama-cpp-python!
+    )
+) else (
+    echo [%YELLOW%ERROR%RESET%] CUDA is not available (CPU only)
+    goto :no_cuda
+)
 echo Starting model download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py
 
 echo.
 python -m pip cache purge
+
 
 echo ╶┬╮╭─╮╭╮╷╭─╴
 echo  │││ ││╰┤├╴ 

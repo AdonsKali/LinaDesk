@@ -5,9 +5,9 @@ import pickle
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from backend.application.interfaces.rag_abc import RAGABC
-from utils.logger import get_logger
+from utils.logger import logger
 
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 
 class RAGService(RAGABC):

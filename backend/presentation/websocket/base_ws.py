@@ -1,9 +1,9 @@
 from fastapi import WebSocket
 from typing import Dict, Optional, Any
 import json
-from utils.logger import get_logger
+from utils.logger import logger
 
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 
 class BaseWebSocketHandler:

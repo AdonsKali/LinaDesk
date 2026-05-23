@@ -5,9 +5,9 @@ import json
 
 from .base_ws import BaseWebSocketHandler
 from backend.application.asr_controller import ASRController
-from utils.logger import get_logger
+from utils.logger import logger
 
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 
 class ASRWebSocketHandler(BaseWebSocketHandler):

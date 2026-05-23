@@ -1,7 +1,7 @@
 from typing import Callable, List, Any
 from functools import lru_cache
 
-from backend.core.schemas.tool_schema import ToolLLMSchema, ToolSchemaOut
+from backend.core.schemas.tool_schema import ToolSchemaOut
 
 class Tool:
     def __init__(self, name: str, description: str, parameters: dict, func: Callable[[], ToolSchemaOut]):

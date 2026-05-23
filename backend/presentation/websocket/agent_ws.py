@@ -5,9 +5,9 @@ from backend.core.schemas.client_schema import ClientComplete, ClientToolCall, C
 from backend.core.schemas.streaming import TokenChunk
 from .base_ws import BaseWebSocketHandler
 from backend.application.agent_controller import AgentController
-from utils.logger import get_logger
+from utils.logger import logger
 
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 
 class AgentWebSocketHandler(BaseWebSocketHandler):

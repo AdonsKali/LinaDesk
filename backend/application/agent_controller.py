@@ -18,9 +18,9 @@ from backend.core.agent.agent import Agent
 from backend.core.schemas.tool_schema import ToolCall
 from backend.application.interfaces.rag_abc import RAGABC
 from backend.application.tool_manager import ToolManager
-from utils.logger import get_logger
+from utils.logger import logger
 
-log = get_logger(__name__)
+log = logger.get(__name__)
 
 
 class AgentController:
@@ -36,6 +36,7 @@ class AgentController:
         self.rag_service = rag_service
 
         self.running = False
+        self.last_user_target = ""
         
         self.enable_rag = self.agent.rag
         self.max_steps = self.agent.max_steps
@@ -182,13 +183,15 @@ class AgentController:
                             tool_call.name,
                             **tool_call.arguments
                         )
-
+                        agent_prompt = f"""Check the logic and execution status of the tool to see if the goal was achieved '{self.last_user_target}'
+                        If yes, inform the user; if no, continue pursuing the goal. If the goal can no longer be achieved, inform the user and offer alternatives.\n"""
                         log.info(f"Tool call results: status={result.status}, msg={result.msg}")
                         yield ClientToolCall(type='tool_call_complete', data=None)
+                        self.last_user_target = self.agent.get_last().content
                         self.agent.add_message(
                             MessageHistory(
                                 role="assistant",
-                                content=self._format_tool_result(tool_call.name, result)
+                                content=agent_prompt + self._format_tool_result(tool_call.name, result)
                             )
                         )
                     except Exception as e:
@@ -197,7 +200,7 @@ class AgentController:
                         self.agent.add_message(
                             MessageHistory(
                                 role="assistant",
-                                content=f"<tool_result>\nTool: {tool_call.name}\nStatus: ERROR\nMessage: {str(e)}\n</tool_result>"
+                                content="<tool_result>\nTool: {tool_call.name}\nStatus: ERROR\nMessage: {str(e)}\n</tool_result>"
                             )
                         )
                         yield ClientError(type="error", message=error_msg)

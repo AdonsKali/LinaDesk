@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox,
                                 QVBoxLayout, QPushButton, QWidget)
 from PySide6.QtGui import QFont, Qt 
 from .advanced_settings import AdvancedSettings
-from ...viewmodel.utils.camera import list_cameras_opencv
+from launcher.utils.camera import list_cameras_opencv
 
 
 class SettingsPanel(QWidget):
