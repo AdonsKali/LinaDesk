@@ -56,16 +56,16 @@ if exist "requirements.txt" (
     python -m pip install --upgrade -r requirements.txt
 )
 
-where nvidia-smi >nul 2>nul
+reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
 if %errorlevel%==0 (
-    nvidia-smi >nul 2>&1
-    if !errorlevel!==0 (
-        set "HAS_CUDA=1"
-    ) else (
-        REM nvidia-smi вернул ошибку, но возможно CUDA все же есть
-        nvidia-smi --query-gpu=name --format=csv,noheader >nul 2>&1
-        if !errorlevel!==0 set "HAS_CUDA=1"
-    )
+    echo [%GREEN%OK%RESET%] NVIDIA driver found
+    echo.
+    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+    echo.
+    set "HAS_CUDA=1"
+) else (
+    echo [%YELLOW%WARN%RESET%] NVIDIA driver not found
+    set "HAS_CUDA="
 )
 
 if defined HAS_CUDA (
