@@ -58,48 +58,48 @@ if exist "requirements.txt" (
 
 reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
 if %errorlevel%==0 (
-    echo [%GREEN%OK%RESET%] NVIDIA driver found
+    echo [%GREEN%OK%RESET%] CUDA ToolKit is found
     echo.
     nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
     echo.
-    set "HAS_CUDA=1"
-) else (
-    echo [%YELLOW%WARN%RESET%] NVIDIA driver not found
-    set "HAS_CUDA="
-)
-
-if defined HAS_CUDA (
-    echo [%GREEN%OK%RESET%] CUDA NVIDIA is installed
-    echo.
-    echo GPU Information:
-    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
-    echo.
+    set CMAKE_ARGS="-DGGML_CUDA=on"
     set "FILENAME=llama_cpp_python.whl"
-    set CMAKE_ARGS=-DGGML_CUDA=on
-    if exist "!FILENAME!" (
-        echo Download llama-cpp-python...
-        powershell -Command "Invoke-WebRequest -Uri 'https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl' -OutFile 'llama_cpp_python.whl'"
-
+    set "URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
+    
+    echo Downloading llama-cpp-python...
+    if exist "%FILENAME%" (
+        echo File is already downloaded.
+        echo Installation...
+        
+        pip show llama_cpp_python >nul 2>&1
+        if %errorlevel%==0 (
+            echo Found old version. Uninstalling...
+            pip uninstall llama_cpp_python -y
+        )
+        
     ) else (
-        echo [%RED%ERROR%RESET%] while downloading llama-cpp-python!
+        powershell -Command "Invoke-WebRequest -Uri '%URL%' -OutFile '%FILENAME%'"
+        if %errorlevel%==0 (
+            echo Download complete.
+        ) else (
+            echo [%RED%ERROR%RESET%] Download failed.
+        )
+        echo [%GREEN%OK%RESET%] Download complete!
     )
 ) else (
-    echo [%YELLOW%WARN%RESET%] CUDA is not available (CPU only)
+    echo [%YELLOW%WARN%RESET%] CUDA ToolKit is not found, CPU only
+    pip install llama-cpp-python
 )
-echo Installation...
-pip show llama_cpp_python >nul 2>&1
-if !errorlevel!==0 (
-    echo Found old version. Uninstalling...
-    pip uninstall llama_cpp_python -y
-)
-pip install "!FILENAME!"
-if !errorlevel!==0 (
-    echo Complete!
-    python -c "from llama_cpp import Llama; print('Import check [OK]')"
-    del "!FILENAME!"
-) else (
-    echo [%RED%ERROR%RESET%] while installing llama-cpp-python!
-)
+if exist "%FILENAME%" (
+    pip install "%FILENAME%"
+    if %errorlevel%==0 (
+        echo Complete!
+        python -c "from llama_cpp import Llama; print('Import check [OK]')"
+        del "%FILENAME%"
+    ) else (
+        echo [%RED%ERROR%RESET%] While installing llama-cpp-python!
+    )
+) 
 
 echo Starting model download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py
