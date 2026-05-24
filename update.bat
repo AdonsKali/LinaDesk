@@ -57,16 +57,7 @@ if exist "requirements.txt" (
 )
 
 reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
-reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
-if %errorlevel%==0 (
-    echo [%GREEN%OK%RESET%] NVIDIA driver found
-    echo.
-    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
-    echo.
-    set "HAS_CUDA=1"
-) else (
-    echo [%YELLOW%WARN%RESET%] NVIDIA driver not found
-    set "HAS_CUDA="
+if !errorlevel!==0 (
     echo [%GREEN%OK%RESET%] NVIDIA driver found
     echo.
     nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
@@ -81,13 +72,14 @@ if defined HAS_CUDA (
     echo [%GREEN%OK%RESET%] CUDA NVIDIA is installed
     echo.
     echo GPU Information:
-    nvidia-smi --query-gpu=name,driver_version,cuda_version --format=csv,noheader
+    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
     echo.
     set "FILENAME=llama_cpp_python.whl"
 
     echo Download llama-cpp-python...
     powershell -Command "Invoke-WebRequest -Uri 'https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl' -OutFile 'llama_cpp_python.whl'"
-    if exist !FILENAME! (
+    
+    if exist "!FILENAME!" (
         echo Installation...
         
         pip show llama_cpp_python >nul 2>&1
@@ -95,12 +87,12 @@ if defined HAS_CUDA (
             echo Found old version. Uninstalling...
             pip uninstall llama_cpp_python -y
         )
-        pip install !FILENAME!
+        pip install "!FILENAME!"
         
         if !errorlevel!==0 (
             echo Complete!
             python -c "from llama_cpp import Llama; print('Import check [OK]')"
-            del !FILENAME!
+            del "!FILENAME!"
         ) else (
             echo [%RED%ERROR%RESET%] while installing llama-cpp-python!
         )
