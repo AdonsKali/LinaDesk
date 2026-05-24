@@ -55,32 +55,33 @@ echo.
 if exist "requirements.txt" (
     python -m pip install --upgrade -r requirements.txt
 )
+
 where nvidia-smi >nul 2>nul
-if %errorlevel%==0 (
+if !errorlevel!==0 (
     echo [%GREEN%OK%RESET%] CUDA NVIDIA is installed
     echo.
     echo CUDA version:
     nvidia-smi --query-gpu=driver_version,cuda_version --format=csv,noheader
     echo.
-    set URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl
-    set FILENAME=llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl
+    set "URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
+    set "FILENAME=llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
 
     echo Download llama-cpp-python...
-    powershell -Command "Invoke-WebRequest -Uri %URL% -OutFile %FILENAME%"
-    if exist %FILENAME% (
+    powershell -Command "Invoke-WebRequest -Uri !URL! -OutFile !FILENAME!"
+    if exist !FILENAME! (
         echo Installation...
         
         pip show llama_cpp_python >nul 2>&1
-        if not errorlevel 1 (
+        if !errorlevel!==0 (
             echo Found old version. Uninstalling...
             pip uninstall llama_cpp_python -y
         )
-        pip install %FILENAME%
+        pip install !FILENAME!
         
-        if %errorlevel%==0 (
+        if !errorlevel!==0 (
             echo Complete!
             python -c "from llama_cpp import Llama; print('Import check [OK]')"
-            del %FILENAME%
+            del !FILENAME!
         ) else (
             echo [%RED%ERROR%RESET%] while installing llama-cpp-python!
         )
@@ -88,8 +89,9 @@ if %errorlevel%==0 (
         echo [%RED%ERROR%RESET%] while downloading llama-cpp-python!
     )
 ) else (
-    echo [%YELLOW%ERROR%RESET%] CUDA is not available (CPU only)
+    echo [%YELLOW%WARN%RESET%] CUDA is not available (CPU only)
 )
+
 echo Starting model download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py
 
