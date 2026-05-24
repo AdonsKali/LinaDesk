@@ -18,7 +18,7 @@ set "RESET=%ESC%[0m"
 
 where python >nul 2>nul
 if errorlevel 1 (
-    echo [%RED%ERROR%RESET%] Python not found in PATH
+    echo [%RED%ERR%RESET%] Python not found in PATH
     echo Install Python 3.10.6 or add it to your PATH
     pause
     exit /b 1
@@ -36,9 +36,9 @@ if errorlevel 1 (
     git reset --hard origin/dev >nul 2>&1
     
     if errorlevel 1 (
-        echo [%RED%ERROR%RESET%] The update failed. Please check your internet connection.
+        echo [%RED%ERR%RESET%] The update failed. Please check your internet connection.
     ) else (
-        echo [%GREEN%OK%RESET%] Files have been updated.
+        echo [%GREEN%INFO%RESET%] Files have been updated.
     )
 )
 echo.
@@ -55,51 +55,32 @@ echo.
 if exist "requirements.txt" (
     python -m pip install --upgrade -r requirements.txt
 )
+cd backend\infrastructure\services\inference
 
-reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
+reg query "HKLM\SOFTWARE\NVIDIA Corporation\GPU Computing Toolkit\CUDA" >nul 2>&1
 if %errorlevel%==0 (
-    echo [%GREEN%OK%RESET%] CUDA ToolKit is found
+    echo [%GREEN%INFO%RESET%] CUDA ToolKit is found
     echo.
     nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
     echo.
-    set CMAKE_ARGS="-DGGML_CUDA=on"
-    set "FILENAME=llama_cpp_python.whl"
-    set "URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
-    
-    echo Downloading llama-cpp-python...
-    if exist "%FILENAME%" (
-        echo File is already downloaded.
-        echo Installation...
-        
-        pip show llama_cpp_python >nul 2>&1
-        if %errorlevel%==0 (
-            echo Found old version. Uninstalling...
-            pip uninstall llama_cpp_python -y
-        )
-        
+    echo [%GREEN%INFO%RESET%] Install/update llama-cpp-python
+    if exist "llama-cpp-python" (
+        echo [%GREEN%INFO%RESET%] Updating existing installation...
+        cd llama-cpp-python
+        git pull --recurse-submodules
+        pip install -e . --no-build-isolation --no-cache-dir --upgrade
     ) else (
-        powershell -Command "Invoke-WebRequest -Uri '%URL%' -OutFile '%FILENAME%'"
-        if %errorlevel%==0 (
-            echo Download complete.
-        ) else (
-            echo [%RED%ERROR%RESET%] Download failed.
-        )
-        echo [%GREEN%OK%RESET%] Download complete!
+        echo [%GREEN%INFO%RESET%] Cloning repository...
+        git clone --recursive https://github.com/abetlen/llama-cpp-python
+        cd llama-cpp-python
+        pip install -e . --no-build-isolation --no-cache-dir
     )
 ) else (
-    echo [%YELLOW%WARN%RESET%] CUDA ToolKit is not found, CPU only
-    pip install llama-cpp-python
+    echo [%YELLOW%WARN%RESET%] CUDA ToolKit is not found
+    pip install llama-cpp-python --upgrade
 )
-if exist "%FILENAME%" (
-    pip install "%FILENAME%"
-    if %errorlevel%==0 (
-        echo Complete!
-        python -c "from llama_cpp import Llama; print('Import check [OK]')"
-        del "%FILENAME%"
-    ) else (
-        echo [%RED%ERROR%RESET%] While installing llama-cpp-python!
-    )
-) 
+
+cd ..\..\..\..
 
 echo Starting model download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py
