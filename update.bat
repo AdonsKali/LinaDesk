@@ -56,16 +56,16 @@ if exist "requirements.txt" (
     python -m pip install --upgrade -r requirements.txt
 )
 
-where nvidia-smi >nul 2>nul
+reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
 if %errorlevel%==0 (
-    nvidia-smi >nul 2>&1
-    if !errorlevel!==0 (
-        set "HAS_CUDA=1"
-    ) else (
-        REM nvidia-smi вернул ошибку, но возможно CUDA все же есть
-        nvidia-smi --query-gpu=name --format=csv,noheader >nul 2>&1
-        if !errorlevel!==0 set "HAS_CUDA=1"
-    )
+    echo [%GREEN%OK%RESET%] NVIDIA driver found
+    echo.
+    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+    echo.
+    set "HAS_CUDA=1"
+) else (
+    echo [%YELLOW%WARN%RESET%] NVIDIA driver not found
+    set "HAS_CUDA="
 )
 
 if defined HAS_CUDA (
@@ -74,11 +74,10 @@ if defined HAS_CUDA (
     echo GPU Information:
     nvidia-smi --query-gpu=name,driver_version,cuda_version --format=csv,noheader
     echo.
-    set "URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
-    set "FILENAME=llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
+    set "FILENAME=llama_cpp_python.whl"
 
     echo Download llama-cpp-python...
-    powershell -Command "Invoke-WebRequest -Uri !URL! -OutFile !FILENAME!"
+    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl' -OutFile 'llama_cpp_python.whl'"
     if exist !FILENAME! (
         echo Installation...
         
