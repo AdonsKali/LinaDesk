@@ -57,7 +57,7 @@ if exist "requirements.txt" (
 )
 
 reg query "HKLM\SOFTWARE\NVIDIA Corporation" >nul 2>&1
-if !errorlevel!==0 (
+if %errorlevel%==0 (
     echo [%GREEN%OK%RESET%] NVIDIA driver found
     echo.
     nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
