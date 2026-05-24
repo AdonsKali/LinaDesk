@@ -74,11 +74,10 @@ if defined HAS_CUDA (
     echo GPU Information:
     nvidia-smi --query-gpu=name,driver_version,cuda_version --format=csv,noheader
     echo.
-    set "URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
     set "FILENAME=llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
 
     echo Download llama-cpp-python...
-    powershell -Command "Invoke-WebRequest -Uri !URL! -OutFile !FILENAME!"
+    curl -L -o "%FILENAME%" "https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
     if exist !FILENAME! (
         echo Installation...
         
