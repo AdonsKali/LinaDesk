@@ -62,14 +62,19 @@ if %errorlevel%==0 (
     echo CUDA version:
     nvidia-smi --query-gpu=driver_version,cuda_version --format=csv,noheader
     echo.
-    set URL=https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.23-cu125/llama_cpp_python-0.3.23-py3-none-win_amd64.whl
-    set FILENAME=llama_cpp_python-0.3.23-py3-none-win_amd64.w
+    set URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl
+    set FILENAME=llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl
 
     echo Download llama-cpp-python...
     powershell -Command "Invoke-WebRequest -Uri %URL% -OutFile %FILENAME%"
     if exist %FILENAME% (
         echo Installation...
         
+        pip show llama_cpp_python >nul 2>&1
+        if not errorlevel 1 (
+            echo Found old version. Uninstalling...
+            pip uninstall llama_cpp_python -y
+        )
         pip install %FILENAME%
         
         if %errorlevel%==0 (
