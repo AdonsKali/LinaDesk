@@ -1,8 +1,6 @@
 /.venv
 llama-cpp-python
 /.vscode
-app/src/media/sprite_manager
-app/tests
 backend/infrastructure/models/*
 backend/infrastructure/data
 !/backend/infrastructure/models/vosk-model
