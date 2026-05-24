@@ -82,14 +82,13 @@ if %errorlevel%==0 (
             python -c "from llama_cpp import Llama; print('Import check [OK]')"
             del %FILENAME%
         ) else (
-            echo [%RED%ERROR%REST%] while installing llama-cpp-python!
+            echo [%RED%ERROR%RESET%] while installing llama-cpp-python!
         )
     ) else (
         echo [%RED%ERROR%RESET%] while downloading llama-cpp-python!
     )
 ) else (
     echo [%YELLOW%ERROR%RESET%] CUDA is not available (CPU only)
-    goto :no_cuda
 )
 echo Starting model download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py
