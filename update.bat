@@ -80,7 +80,7 @@ if %errorlevel%==0 (
     pip install llama-cpp-python --upgrade
 )
 
-cd ..\..\..\..
+cd ..\..\..\..\..
 
 echo Starting model download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py
