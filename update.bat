@@ -57,11 +57,22 @@ if exist "requirements.txt" (
 )
 
 where nvidia-smi >nul 2>nul
-if !errorlevel!==0 (
+if %errorlevel%==0 (
+    nvidia-smi >nul 2>&1
+    if !errorlevel!==0 (
+        set "HAS_CUDA=1"
+    ) else (
+        REM nvidia-smi вернул ошибку, но возможно CUDA все же есть
+        nvidia-smi --query-gpu=name --format=csv,noheader >nul 2>&1
+        if !errorlevel!==0 set "HAS_CUDA=1"
+    )
+)
+
+if defined HAS_CUDA (
     echo [%GREEN%OK%RESET%] CUDA NVIDIA is installed
     echo.
-    echo CUDA version:
-    nvidia-smi --query-gpu=driver_version,cuda_version --format=csv,noheader
+    echo GPU Information:
+    nvidia-smi --query-gpu=name,driver_version,cuda_version --format=csv,noheader
     echo.
     set "URL=https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
     set "FILENAME=llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl"
