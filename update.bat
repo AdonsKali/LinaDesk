@@ -71,18 +71,34 @@ if %errorlevel%==0 (
 if defined HAS_CUDA (
     echo [%GREEN%OK%RESET%] CUDA NVIDIA is installed
     echo.
-    echo Installing llama-cpp-python with CUDA support...
+    echo GPU Information:
+    nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+    echo.
+    set "FILENAME=llama_cpp_python.whl"
     set CMAKE_ARGS=-DGGML_CUDA=on
+    if exist "!FILENAME!" (
+        echo Download llama-cpp-python...
+        powershell -Command "Invoke-WebRequest -Uri 'https://github.com/JamePeng/llama-cpp-python/releases/download/v0.3.39-cu131-win-20260519/llama_cpp_python-0.3.39+cu131-cp310-cp310-win_amd64.whl' -OutFile 'llama_cpp_python.whl'"
+
+    ) else (
+        echo [%RED%ERROR%RESET%] while downloading llama-cpp-python!
+    )
 ) else (
     echo [%YELLOW%WARN%RESET%] CUDA is not available (CPU only)
 )
-pip uninstall llama_cpp_python -y 2>nul
-pip install "llama-cpp-python @ git+https://github.com/JamePeng/llama-cpp-python.git"
-if %errorlevel%==0 (
+echo Installation...
+pip show llama_cpp_python >nul 2>&1
+if !errorlevel!==0 (
+    echo Found old version. Uninstalling...
+    pip uninstall llama_cpp_python -y
+)
+pip install "!FILENAME!"
+if !errorlevel!==0 (
     echo Complete!
     python -c "from llama_cpp import Llama; print('Import check [OK]')"
+    del "!FILENAME!"
 ) else (
-    echo [%RED%WARN%RESET%] llama-cpp-python is not installed
+    echo [%RED%ERROR%RESET%] while installing llama-cpp-python!
 )
 
 echo Starting model download...
