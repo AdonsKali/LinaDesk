@@ -64,6 +64,7 @@ if %errorlevel%==0 (
     nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
     echo.
     echo [%GREEN%INFO%RESET%] Install/update llama-cpp-python
+    set CMAKE_ARGS="-DGGML_CUDA=on"
     if exist "llama-cpp-python" (
         echo [%GREEN%INFO%RESET%] Updating existing installation...
         cd llama-cpp-python
