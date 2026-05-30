@@ -17,6 +17,7 @@ class AnimationType(Enum):
     TALK = "talk"
     THINK = "think"
     PROCESS = "process"
+    FILE_DROPPED = "file_dropped"
 
 @dataclass
 class ChibiModel:

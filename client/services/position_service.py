@@ -21,9 +21,12 @@ class PositionService(QObject):
         self._bubble_height = 200
         self._chat_width = 350
         self._chat_height = 60
+        self._statuses_width = 50
+        self._statuses_height = 200
         
         self._bubble_margin = -35   
         self._chat_margin = 5 
+        self._statuses_margin = -5
     
     def set_screen_size(self, width: int, height: int):
         self._screen_width = width
@@ -99,10 +102,27 @@ class PositionService(QObject):
         
         return int(chat_x), int(chat_y)
     
+    def calculate_statuses_position(self, chibi_x: int, chibi_y: int):
+        """Calculate statuses position - always try left first, if not enough space - place right"""
+        statuses_y = chibi_y
+        statuses_x = chibi_x - self._statuses_width - self._statuses_margin
+
+        if statuses_x < 0:
+            statuses_x = chibi_x + self._chibi_width + self._statuses_margin
+            if statuses_x + self._statuses_width > self._screen_width:
+                statuses_x = chibi_x + (self._chibi_width // 2) - (self._statuses_width // 2)
+                statuses_x = max(0, min(statuses_x, self._screen_width - self._statuses_width))
+        
+        statuses_y = max(0, min(statuses_y, self._screen_height - self._statuses_height))
+        log.debug(f"Statuses position: {statuses_x}, {statuses_y}")
+        
+        return int(statuses_x), int(statuses_y)
+    
     def on_chibi_moved(self, x: int, y: int):
         """Обработка перемещения чиби"""
         bubble_x, bubble_y, position_type = self.calculate_bubble_position(x, y)
         chat_x, chat_y = self.calculate_chat_position(x, y)
+        statuses_x, statuses_y = self.calculate_statuses_position(x, y)
         self._event_bus.emit(Event(
             EventType.BUBBLE_POSITION_UPDATED,
             {'x': int(bubble_x), 'y': int(bubble_y), 'type': position_type}
@@ -110,5 +130,9 @@ class PositionService(QObject):
         self._event_bus.emit(Event(
             EventType.CHAT_POSITION_UPDATED,
             {'x': int(chat_x), 'y': int(chat_y)}
+        ))
+        self._event_bus.emit(Event(
+            EventType.STATUSES_POSITION_UPDATED,
+            {'x': int(statuses_x), 'y': int(statuses_y)}
         ))
         log.debug(f"Cibi position: {position_type} ({x}, {y})")

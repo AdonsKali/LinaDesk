@@ -9,6 +9,7 @@ from client.services.position_service import PositionService
 from client.viewmodels.chibi_viewmodel import ChibiViewModel
 from client.viewmodels.bubble_viewmodel import BubbleViewModel
 from client.viewmodels.chat_viewmodel import ChatViewModel
+from client.viewmodels.statuses_viewmodel import StatusesViewModel
 from client.models.chibi_model import ChibiState, AnimationType
 from utils.logger import logger
 
@@ -29,6 +30,7 @@ class AppCoordinator(QObject):
         self.api_service = ApiService(self.event_bus)
         self.position_service = PositionService(self.event_bus)
 
+        self.statuses_vm = StatusesViewModel(self.event_bus)
         self.chibi_vm = ChibiViewModel(self.event_bus)
         self.bubble_vm = BubbleViewModel(self.event_bus)
         self.chat_vm = ChatViewModel(self.event_bus)
@@ -50,8 +52,10 @@ class AppCoordinator(QObject):
     
     def _on_user_text(self, event: Event) -> None:
         """Обработка текста от пользователя"""
-        text = event.data
-        if not text:
+        data = event.data
+        text = data.get("text")
+        data_files = data.get("data_files")
+        if not data.get("text"):
             return
         
         self._ai_streaming = False
@@ -59,7 +63,7 @@ class AppCoordinator(QObject):
         self.event_bus.emit(Event(EventType.CHIBI_STATE_CHANGED, ChibiState.THINKING.name))
         self.event_bus.emit(Event(EventType.CHIBI_ANIMATION_CHANGED, AnimationType.THINK.value))
         self.event_bus.emit(Event(EventType.CHAT_PROCESSING_CHANGED, True))
-        self.api_service.send_message(text)
+        self.api_service.send_message(text, data_files)
         log.info(f"Sending message to AI: {text}")
 
     def _on_ai_token(self, event: Event) -> None:
@@ -107,6 +111,7 @@ class AppCoordinator(QObject):
     
     def _on_chibi_clicked(self, event: Event) -> None:
         """Клик по чиби"""
+        log.info("Clicked")
         self.bubble_vm.show()
         self.chat_vm.show()
     

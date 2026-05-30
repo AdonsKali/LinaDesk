@@ -147,13 +147,14 @@ class ApiService(BaseService):
         
         threading.Thread(target=run, daemon=True).start()
     
-    def send_message(self, text: str) -> None:
+    def send_message(self, text: str, data_files: list) -> None:
         """Send text message"""
         if self.agent_ws and self.agent_ws.sock and self.agent_ws.sock.connected:
             try:
                 self.agent_ws.send(json.dumps({
                     "type": "user_text",
-                    "prompt": text
+                    "prompt": text,
+                    "data_files": data_files
                 }))
             except Exception as e:
                 logger.error(f"Error sending message: {e}")

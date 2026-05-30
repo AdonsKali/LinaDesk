@@ -6,6 +6,7 @@ from PySide6.QtCore import QTimer
 from client.views.chibi_view import ChibiView
 from client.views.bubble_view import BubbleView
 from client.views.chat_view import ChatView
+from client.views.statuses_view import StatusesView
 from utils.logger import logger
 from argparse import ArgumentParser
 parser = ArgumentParser()
@@ -32,6 +33,7 @@ class ChibiApp:
         )
         self.bubble_view = BubbleView(self.coordinator.bubble_vm)
         self.chat_view = ChatView(self.coordinator.chat_vm)
+        self.statuses_view = StatusesView(self.coordinator.statuses_vm)
         
         log.info("Setting up view connections...")
         self._setup_view_connections()
@@ -59,6 +61,9 @@ class ChibiApp:
         
         self.coordinator.chat_vm.position_changed.connect(
             self.chat_view.move
+        )
+        self.coordinator.statuses_vm.position_changed.connect(
+            self.statuses_view.move
         )
         
         self.chibi_view.double_clicked.connect(self._on_chibi_activated)

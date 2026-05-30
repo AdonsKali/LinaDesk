@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtCore import Qt, QPoint, Signal
-from PySide6.QtGui import QMouseEvent
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QDragEnterEvent, QDropEvent, QMouseEvent
 from client.viewmodels.chibi_viewmodel import ChibiViewModel
 from client.services.animation_service import AnimationService
 
@@ -8,14 +8,17 @@ class ChibiView(QLabel):
     """Виджет чиби персонажа"""
     
     position_changed = Signal(int, int)
-    clicked = Signal()
     double_clicked = Signal()
+    file_enter = Signal()
+    file_leave = Signal()
+    file_dropped = Signal(str)
     
     def __init__(self, viewmodel: ChibiViewModel, animation_service: AnimationService):
         super().__init__()
         self._vm = viewmodel
         self._animation_service = animation_service
         self._drag_start = None
+        self.setAcceptDrops(True)
         
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -61,3 +64,24 @@ class ChibiView(QLabel):
         """Двойной клик"""
         self._vm.on_clicked()
         self.double_clicked.emit()
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        """Событие входа перетаскивания"""
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+            self._vm._on_file_enter()
+        else:
+            event.ignore()
+    
+    def dragLeaveEvent(self, event) -> None:
+        """Событие выхода перетаскивания"""
+        self._vm._on_file_leave()
+    
+    def dropEvent(self, event: QDropEvent) -> None:
+        """Событие сброса файла"""
+        urls = event.mimeData().urls()
+        if urls:
+            file_path = urls[0].toLocalFile()
+            if file_path:
+                self._vm._on_file_dropped(file_path)
+        event.acceptProposedAction()
