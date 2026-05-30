@@ -40,7 +40,7 @@ class Agent():
             'content': content
         })
     
-    def add_user_message(self, content: Union[str, list]):
+    def add_user_message(self, content: List[Dict]):
         """Добавление пользовательского сообщения"""
         self._history.append({
             'role': 'user',
@@ -82,8 +82,7 @@ class Agent():
                 content: List[Dict] = last_msg.get('content', [])
                 if isinstance(content, list):
                     filtered_content = [
-                        item for item in content 
-                        if item.get('type') != 'image_url' or item.get('type') != 'input_audio'
+                        item for item in content if item.get('type') != 'image_url' or item.get('type') != 'input_audio'
                     ]
                     return filtered_content
         return []

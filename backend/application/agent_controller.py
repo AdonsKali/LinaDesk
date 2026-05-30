@@ -131,7 +131,6 @@ class AgentController:
 
         try:
             for step in range(self.max_steps):
-                history: List[Dict] = self.agent.history
                 assistant_text = ""
                 tool_calls: List[ToolCall] = []
 
@@ -140,7 +139,7 @@ class AgentController:
                 )
 
                 async for event in self.inference.stream(
-                    prompt=history,
+                    prompt=self.agent.history,
                     tools=tool_descriptions,
                     generation_params=self.agent.generation_params,
                 ): #type: ignore
@@ -154,6 +153,11 @@ class AgentController:
                         tool_calls.append(event.tool)
                         break
                     elif isinstance(event, StreamComplete):
+                        last_msg = self.agent.get_user_content_without_media()
+                        self.agent.remove_last_message()
+                        self.agent.add_message(
+                            'user', last_msg
+                        )
                         if assistant_text.strip():
                             self.agent.add_message(
                                 'assistant', assistant_text
@@ -166,16 +170,6 @@ class AgentController:
                             message=event.message
                         )
                         return
-
-                last_msg = self.agent.get_user_content_without_media()
-                self.agent.remove_last_message()
-                self.agent.add_message(
-                    'user', last_msg
-                )
-                if assistant_text.strip():
-                    self.agent.add_message(
-                        'assistant', assistant_text
-                    )
 
                 if not tool_calls:
                     yield ClientComplete(type="complete")

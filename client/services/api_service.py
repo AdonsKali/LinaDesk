@@ -20,7 +20,7 @@ class ApiService(BaseService):
     _tool_call_completed = Signal()
     _generation_completed = Signal()
     _generation_error = Signal(str)
-    _recognition_result = Signal(str)
+    _recognition_result = Signal(dict)
     _recognition_error = Signal(str)
     _connection_lost = Signal(str)
     _send_audio_chunk_signal = Signal(bytes)
@@ -59,7 +59,7 @@ class ApiService(BaseService):
             lambda error: self._event_bus.emit(Event(EventType.AI_ERROR_OCCURRED, str(error)))
         )
         self._recognition_result.connect(
-            lambda text: self._event_bus.emit(Event(EventType.USER_TEXT_SUBMITTED, str(text)))
+            lambda text: self._event_bus.emit(Event(EventType.USER_TEXT_SUBMITTED, dict(text)))
         )
         self._recognition_error.connect(
             lambda error: self._event_bus.emit(Event(EventType.AI_ERROR_OCCURRED, str(error)))
@@ -273,7 +273,7 @@ class ApiService(BaseService):
                 else:
                     text = str(content)
                 if text:
-                    self._recognition_result.emit(str(text))
+                    self._recognition_result.emit({"text":str(text)})
             
             elif msg_type == "start":
                 logger.info("Recognition started on server")

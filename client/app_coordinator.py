@@ -52,11 +52,10 @@ class AppCoordinator(QObject):
     
     def _on_user_text(self, event: Event) -> None:
         """Обработка текста от пользователя"""
+        log.info(type(event.data))
         data = event.data
-        text = data.get("text")
-        data_files = data.get("data_files")
-        if not data.get("text"):
-            return
+        text = data.get("text", "")
+        data_files = data.get("data_files", [])
         
         self._ai_streaming = False
         self._first_token = True
