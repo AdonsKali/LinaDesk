@@ -11,6 +11,7 @@ class ChibiViewModel(BaseViewModel):
     state_changed = Signal(str)
     animation_changed = Signal(str)
     position_changed = Signal(int, int)
+    file_dropped = Signal(str)
     
     def __init__(self, event_bus: EventBus):
         super().__init__(event_bus)
@@ -71,3 +72,18 @@ class ChibiViewModel(BaseViewModel):
         """Обработчик изменения позиции"""
         x, y = event.data
         self.position_changed.emit(int(x), int(y))
+
+    def _on_file_enter(self) -> None:
+        """Обработчик входа файла"""
+        if self._model.state == ChibiState.IDLE:
+            self._update_state(ChibiState.PROCESSING, AnimationType.PROCESS)
+
+    def _on_file_leave(self) -> None:
+        if self._model.state == ChibiState.PROCESSING:
+            self._update_state(ChibiState.IDLE, AnimationType.IDLE)
+
+    def _on_file_dropped(self, file_path: str) -> None:
+        """Обработка перетащенного файла"""
+        self._update_state(ChibiState.IDLE, AnimationType.IDLE)
+        self.emit(Event(EventType.USER_FILE_DROPPED, file_path))
+       

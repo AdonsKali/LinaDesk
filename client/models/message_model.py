@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-from typing import List
+from dataclasses import dataclass
 from enum import Enum, auto
 
 class MessageSource(Enum):
@@ -8,12 +7,24 @@ class MessageSource(Enum):
     AI = auto()
     SYSTEM = auto()
 
+
+class BubblePosition(Enum):
+    """Позиция облачка относительно чиби"""
+    RIGHT_TOP = "right-top"
+    LEFT_TOP = "left-top"
+    RIGHT_BOTTOM = "right-bottom"
+    LEFT_BOTTOM = "left-bottom"
+
+
+
 @dataclass
-class MessageModel:
+class BubbleModel:
     """Модель сообщения"""
-    text: str = ""
-    source: MessageSource = MessageSource.AI
     is_streaming: bool = False
+    is_visible: bool = False
+    source: MessageSource = MessageSource.AI
+    position: BubblePosition = BubblePosition.RIGHT_TOP
+    text: str = ""
     
     def append_token(self, token: str) -> None:
         """Добавление токена при стриминге"""

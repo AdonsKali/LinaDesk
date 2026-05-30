@@ -3,7 +3,7 @@ from PySide6.QtCore import QObject, Signal, Property, QTimer
 from client.core.event_bus import EventBus
 from client.core.events import Event
 from client.core.event_types import EventType
-from client.models.ui_models import BubbleModel, BubblePosition
+from client.models.message_model import BubbleModel, BubblePosition
 
 
 class BubbleViewModel(QObject):

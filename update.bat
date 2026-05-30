@@ -72,7 +72,7 @@ if %errorlevel%==0 (
         pip install -e . --no-build-isolation --no-cache-dir --upgrade
     ) else (
         echo [%GREEN%INFO%RESET%] Cloning repository...
-        git clone --recursive https://github.com/abetlen/llama-cpp-python
+        git clone --recursive https://github.com/JamePeng/llama-cpp-python
         cd llama-cpp-python
         pip install -e . --no-build-isolation --no-cache-dir
     )
@@ -83,8 +83,9 @@ if %errorlevel%==0 (
 
 cd ..\..\..\..\..
 
-echo Starting model download...
-"%~dp0\.venv\Scripts\python.exe" utils\download_model.py
+echo Starting models download...
+"%~dp0\.venv\Scripts\python.exe" utils\download_model.py -repo_id="unsloth/gemma-4-E2B-it-GGUF" -file_name="gemma-4-E2B-it-Q4_K_S.gguf"
+"%~dp0\.venv\Scripts\python.exe" utils\download_model.py -repo_id="unsloth/gemma-4-E2B-it-GGUF" -file_name="mmproj-F16.gguf"
 
 echo.
 python -m pip cache purge

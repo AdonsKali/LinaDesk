@@ -7,7 +7,8 @@ class Config(BaseSettings):
     llm_model_path: str = Field(default=f"{MODELS}/model3.gguf", alias="LLM_MODEL_PATH")
     llm_context_size: int = Field(default=4096, alias="LLM_CONTEXT_SIZE")
     llm_threads: int = Field(default=6, alias="LLM_THREADS")
-    llm_gpu_layers: int = Field(default=18, alias="LLM_GPU_LAYERS")
+    llm_gpu_layers: int | str = Field(default=18, alias="LLM_GPU_LAYERS")
+    llm_clip_model_path: str | None = Field(default=None, alias="LLM_CLIP_MODEL_PATH")
     
     asr_model_path: str = Field(default=str(VOSK_MODEL), alias="ASR_MODEL_PATH")
     

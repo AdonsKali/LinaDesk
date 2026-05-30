@@ -5,9 +5,9 @@ from fastapi import FastAPI
 from utils.logger import logger
 from argparse import ArgumentParser
 parser = ArgumentParser()
-logger.setup(app_name="client", 
+logger.setup(app_name="backend", 
              log_dir="logs", 
-             debug= True if "--debug" in sys.argv else False,
+             debug= True if "--log-level" in sys.argv else False,
              clear_on_start=True)
 log = logger.get(__name__)
 from backend.presentation.server import create_app

@@ -177,7 +177,7 @@ class ProcessManager(QObject):
             "--port", self.port,]
         if self.debug_mode:
             log.debug("Starting server in debug mode")
-            cmd.append("--debug")
+            cmd.extend(["--log-level", "debug"])
         return cmd
     
     def _get_client_command(self, language: str) -> List[str]:

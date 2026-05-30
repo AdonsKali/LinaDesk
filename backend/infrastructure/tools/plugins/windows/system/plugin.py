@@ -1,12 +1,12 @@
 import os
 from pathlib import Path
+import sys
 from backend.application.decorators import tool
 from backend.core.schemas import ToolSchemaOut
 import subprocess
 import threading
 import queue
 import time
-from backend.core.schemas import ToolSchemaOut
 
 
 class AIShellController:
@@ -182,3 +182,55 @@ def ps_shell(command: str) -> ToolSchemaOut:
             status='error',
             msg=f"PowerShell execution error: {str(e)}"
         )
+    
+
+from win32api import SetCursorPos, mouse_event
+from win32con import MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP
+
+@tool(
+    name="click_on_ui",
+    description="Move and click by cursor",
+    parameters={ 
+        "type": "object",
+        "properties": {
+            "x": {
+                "type": "int"
+            },
+            "y": {
+                "type": "int"
+            },
+        },
+        "required": ["x", "y"]
+     }  
+)
+def click_on_ui(x: int, y: int) -> ToolSchemaOut:
+    try:
+        SetCursorPos((x, y))
+        time.sleep(0.05)
+        mouse_event(MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
+        mouse_event(MOUSEEVENTF_LEFTUP, x, y, 0, 0)
+        return  ToolSchemaOut(
+            status='ok',
+            msg=f"Clicked on {x}, {y}")
+    except Exception as e:
+        return ToolSchemaOut(
+            status='error',
+            msg=f"Error clicking on {x}, {y}: {e}")
+        
+
+from pyautogui import screenshot
+def _screenshot() -> ToolSchemaOut:
+    try:
+        img = screenshot("screenshot.png")
+        return ToolSchemaOut(
+            status='ok',
+            msg="Screenshot taken",
+            data={
+                "image": img
+            })
+    except Exception as e:
+        return ToolSchemaOut(
+            status='error',
+            msg=f"Error taking screenshot: {e}")
+        
+        

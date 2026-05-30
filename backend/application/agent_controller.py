@@ -1,5 +1,5 @@
 import json
-from typing import AsyncGenerator, List
+from typing import AsyncGenerator, Dict, List
 from numpy import datetime64
 from backend.core.schemas.client_schema import (
     ClientComplete,
@@ -12,12 +12,12 @@ from backend.core.schemas.streaming import (
     StreamComplete,
     StreamError,
 )
-from backend.core.schemas.message_schema import MessageHistory
 from backend.application.interfaces.inferenceABC import InferenceABC
 from backend.core.agent.agent import Agent
 from backend.core.schemas.tool_schema import ToolCall
 from backend.application.interfaces.rag_abc import RAGABC
 from backend.application.tool_manager import ToolManager
+from utils.process_media import build_media_payload
 from utils.logger import logger
 
 log = logger.get(__name__)
@@ -61,14 +61,14 @@ class AgentController:
                     last_user_message = history[-2]
                     last_assistant_message = history[-1]
                     
-                    interaction_content = f"User: {last_user_message.content}\nAssistant: {last_assistant_message.content}"
+                    interaction_content = f"User: {last_user_message.get('content', '')}\nAssistant: {last_assistant_message.get('content', '')}"
                     
                     doc_id = self.rag_service.add_document(
                         content=interaction_content,
                         metadata={
                             "type": "qa_pair",
                             "source": "agent_controller",
-                            "user_query": last_user_message.content[:100],
+                            "user_query": last_user_message.get('content', '')[:100],
                             "remember_command": prompt[:100],
                             "timestamp": str(datetime64('now'))
                         }
@@ -79,20 +79,40 @@ class AgentController:
                     return True
         return False
 
-    async def response(self, prompt: str) -> AsyncGenerator:
-
-        if not prompt.strip():
+    async def response(self, user_data_request: dict) -> AsyncGenerator:
+        if not user_data_request:
             yield ClientError(type="error", message="Empty prompt")
             return
-
+        prompt = user_data_request.get("prompt", "")
+        data_files: list = user_data_request.get("data_files", [])
+        content = ""
+        files = []
+        messages: List[Dict] = []
+        if data_files:
+            for status in data_files:
+                if "IMAGE" in status.values():
+                    for i in status.keys():
+                        data_uri = build_media_payload(i)
+                        messages.append(data_uri)
+                elif "AUDIO" in status.values():
+                    for i in status.keys():
+                        data_uri = build_media_payload(i)
+                        messages.append(data_uri)
+                else:
+                    for cont in status.keys():
+                        files.append(cont) 
+                    content = f"<|data_files>{str(files)}<data_files|>\n{prompt}"
+        
         rag_context = ""
         if self.enable_rag and self.rag_service:
             rag_results = self.rag_service.search(prompt, top_k=3, similarity_threshold=0.33)
             if rag_results:
                 rag_context = "\n".join([f"<relevant_info>: {result['content']}</relevant_info>" for result in rag_results])
+
+        messages.append({"type": "text", "text": f"{content + rag_context + prompt}"})
                 
         self.agent.add_message(
-            MessageHistory(role="user", content=f"Context for user query: {rag_context}\n{prompt}")
+            'user', messages
         )
         original_prompt = prompt
   
@@ -111,7 +131,6 @@ class AgentController:
 
         try:
             for step in range(self.max_steps):
-                history: List[MessageHistory] = self.agent.history
                 assistant_text = ""
                 tool_calls: List[ToolCall] = []
 
@@ -120,7 +139,7 @@ class AgentController:
                 )
 
                 async for event in self.inference.stream(
-                    prompt=history,
+                    prompt=self.agent.history,
                     tools=tool_descriptions,
                     generation_params=self.agent.generation_params,
                 ): #type: ignore
@@ -134,12 +153,14 @@ class AgentController:
                         tool_calls.append(event.tool)
                         break
                     elif isinstance(event, StreamComplete):
+                        last_msg = self.agent.get_user_content_without_media()
+                        self.agent.remove_last_message()
+                        self.agent.add_message(
+                            'user', last_msg
+                        )
                         if assistant_text.strip():
                             self.agent.add_message(
-                                MessageHistory(
-                                    role="assistant",
-                                    content=assistant_text
-                                )
+                                'assistant', assistant_text
                             )
                         yield ClientComplete(type="complete")
                         return
@@ -150,14 +171,6 @@ class AgentController:
                         )
                         return
 
-                if assistant_text.strip():
-                    self.agent.add_message(
-                        MessageHistory(
-                            role="assistant",
-                            content=assistant_text
-                        )
-                    )
-
                 if not tool_calls:
                     yield ClientComplete(type="complete")
                     return
@@ -166,9 +179,8 @@ class AgentController:
                 
                 if current_tool_calls == previous_tool_calls:
                     log.warning(f"Detected repeated tool calls: {current_tool_calls}, stopping")
-                    yield ClientError(
-                        type="error",
-                        message="Stopping to prevent infinite loop: detected repeated tool calls"
+                    yield ClientComplete(
+                        type="complete",
                     )
                     return
                 
@@ -176,6 +188,8 @@ class AgentController:
                 
                 for tool_call in tool_calls:
                     try:
+                        if not self.last_user_target:
+                            self.last_user_target = self.agent[-2].get('content', 'no_goal') #type: ignore
                         log.debug(f"Executing tool: {tool_call.name} with args: {tool_call.arguments}")
                         yield ClientToolCall(type="tool_call", data={'name': tool_call.name, 'arguments': tool_call.arguments})
                     
@@ -183,44 +197,23 @@ class AgentController:
                             tool_call.name,
                             **tool_call.arguments
                         )
-                        agent_prompt = f"""Check the logic and execution status of the tool to see if the goal was achieved '{self.last_user_target}'
-                        If yes, inform the user; if no, continue pursuing the goal. If the goal can no longer be achieved, inform the user and offer alternatives.\n"""
+                        agent_prompt = f"Check the logic and execution status of the tool to see if the goal was achieved '{self.last_user_target}' If yes, inform the user; if no, continue pursuing the goal. If the goal can no longer be achieved, inform the user and offer alternatives.\n"
                         log.info(f"Tool call results: status={result.status}, msg={result.msg}")
                         yield ClientToolCall(type='tool_call_complete', data=None)
-                        self.last_user_target = self.agent.get_last().content
+                        self.last_user_target = self.agent.get_last().get("content", "") #type: ignore
                         self.agent.add_message(
-                            MessageHistory(
-                                role="assistant",
-                                content=agent_prompt + self._format_tool_result(tool_call.name, result)
-                            )
+                            'assistant', agent_prompt + self.agent._format_tool_result(tool_call.name, result)
                         )
                     except Exception as e:
                         error_msg = f"Tool execution error: {str(e)}"
                         log.error(error_msg)
                         self.agent.add_message(
-                            MessageHistory(
-                                role="assistant",
-                                content="<tool_result>\nTool: {tool_call.name}\nStatus: ERROR\nMessage: {str(e)}\n</tool_result>"
-                            )
+                            'assistant',f"<tool_result>\nTool: {tool_call.name}\nStatus: ERROR\nMessage: {str(e)}\n</tool_result>"
                         )
+                        yield ClientToolCall(type='tool_call_complete', data=None)
                         yield ClientError(type="error", message=error_msg)
-                        return
 
         finally:
             log.info(self.agent.history)
+            self.last_user_target = ""
             self.running = False
-
-    def _format_tool_result(self, tool_name: str, result) -> str:
-        """Форматирует результат инструмента в строку для модели"""
-        if hasattr(result, 'status'):
-            if result.status == 'ok':
-                output = f"<tool_result>\nTool: {tool_name}\nStatus: SUCCESS\n"
-                if result.msg:
-                    output += f"Message: {result.msg}\n"
-                if result.data:
-                    output += f"Data: {json.dumps(result.data, ensure_ascii=False)[:500]}\n"
-                output += "</tool_result>"
-                return output
-            else:
-                return f"<tool_result>\nTool: {tool_name}\nStatus: ERROR\nMessage: {result.msg or 'Unknown error'}\n</tool_result>"
-        return f"<tool_result>\nTool: {tool_name}\nResult: {str(result)}\n</tool_result>"

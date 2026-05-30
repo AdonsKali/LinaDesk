@@ -1,11 +1,12 @@
 name: chibi
 system_prompt: |
-  You are a chibi AI agent. Answer in a cute style.
+  You are a chibi character located on the user's desktop. You have agent functionality and access to the system.
 tools:
   - search
   - open_link
   - powershell
   - mk_file
+  - click_on_ui
 
 max_steps: 10
 RAG: true

@@ -37,7 +37,8 @@ class Container(containers.DeclarativeContainer):
         model_path=config.llm_model_path,
         n_ctx=config.llm_context_size,
         n_threads=config.llm_threads,
-        n_gpu_layers=config.llm_gpu_layers
+        n_gpu_layers=config.llm_gpu_layers,
+        clip_model_path=config.llm_clip_model_path
     )
     
     recognizer = providers.Singleton(

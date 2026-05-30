@@ -7,6 +7,7 @@ class EventType(Enum):
     USER_VOICE_STOPPED = auto()
     USER_CHIBI_CLICKED = auto()
     USER_CHIBI_DRAGGED = auto()
+    USER_FILE_DROPPED = auto()
     
 
     AI_RESPONSE_STARTED = auto()
@@ -26,4 +27,9 @@ class EventType(Enum):
     CHAT_PROCESSING_CHANGED = auto()
     BUBBLE_POSITION_UPDATED = auto()
     CHAT_POSITION_UPDATED = auto()
+    STATUSES_POSITION_UPDATED = auto()
+
+    ADD_TEXT_TO_PROMPT = auto()
+    CLEAR_ALL_FILE_STATUSES = auto()
+
 

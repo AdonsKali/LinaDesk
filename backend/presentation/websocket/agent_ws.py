@@ -51,12 +51,10 @@ class AgentWebSocketHandler(BaseWebSocketHandler):
             data = await self.receive_json(client_id)
             if not data:
                 continue
-            
             msg_type = data.get("type")
-            content = data.get("prompt", "")
             
             if msg_type == "user_text":
-                async for data in controller.response(content):
+                async for data in controller.response(data):
                     if isinstance(data, TokenChunk):
                         await self.send_json(client_id, {"type": data.type, "content": data.content})
                     elif isinstance(data, ClientToolCall):
