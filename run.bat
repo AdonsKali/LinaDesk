@@ -11,4 +11,10 @@ echo  `-'`-'^|___ ^|   ^| ^|  (_,_)\  ^|^|  _( )_  ^|        ^|  _( )_  ^| ^|   
 echo   ^|        \^|   ^| ^|  ^|    ^|  ^|\ (_ o _) /        \ (_ o _) / ^|   ^|         
 echo   `--------`'---' '--'    '--' '.(_,_).'          '.(_,_).'  '---'         
 setlocal
-"%~dp0\.venv\Scripts\python.exe" -m main
+cd /d "%~dp0"
+if exist ".venv\Scripts\python.exe" (
+  ".venv\Scripts\python.exe" main.py
+) else (
+  py -3.11 main.py
+)
+if errorlevel 1 pause

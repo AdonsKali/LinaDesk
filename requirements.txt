@@ -24,3 +24,4 @@ pydantic-settings==2.12.0
 dependency-injector==4.48.3
 scikit_build_core>=0.11.6
 ddgs==9.8.0
+qasync>=0.27,<1
