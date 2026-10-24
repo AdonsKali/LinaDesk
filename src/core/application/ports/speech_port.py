@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class SpeechRecognizerPort(Protocol):
+    async def transcribe(self, pcm: bytes, sample_rate: int) -> str: ...
+    async def close(self) -> None: ...

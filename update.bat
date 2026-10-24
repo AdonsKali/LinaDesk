@@ -55,7 +55,7 @@ echo.
 if exist "requirements.txt" (
     python -m pip install --upgrade -r requirements.txt
 )
-cd backend\infrastructure\services\inference
+cd src\core\infrastructure\providers\llm\local
 
 reg query "HKLM\SOFTWARE\NVIDIA Corporation\GPU Computing Toolkit\CUDA" >nul 2>&1
 if %errorlevel%==0 (
@@ -81,11 +81,17 @@ if %errorlevel%==0 (
     pip install llama-cpp-python --upgrade
 )
 
-cd ..\..\..\..\..
+cd ..\..\..\..
 
 echo Starting models download...
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py -repo_id="unsloth/gemma-4-E2B-it-GGUF" -file_name="gemma-4-E2B-it-Q4_K_S.gguf"
 "%~dp0\.venv\Scripts\python.exe" utils\download_model.py -repo_id="unsloth/gemma-4-E2B-it-GGUF" -file_name="mmproj-F16.gguf"
+"%~dp0\.venv\Scripts\python.exe" utils\download_model.py -repo_id="sentence-transformers/all-MiniLM-L6-v2" -file_name="mmproj-F16.gguf"
+
+curl --output src/resources/models/vosk.zip https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip
+powershell -command "Expand-Archive -Force src/resources/models/vosk.zip src/resources/models"
+powershell -command "del src/resources/models/vosk.zip"
+
 
 echo.
 python -m pip cache purge

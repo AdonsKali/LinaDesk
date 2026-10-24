@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class PluginCatalogPort(Protocol):
+    async def list_plugins(self) -> list[dict]: ...
+    async def set_enabled(self, name: str, enabled: bool) -> None: ...
