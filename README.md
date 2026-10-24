@@ -1,5 +1,3 @@
-> Обновлённый desktop-прототип: [инструкция запуска](PROTOTYPE.md), [архитектура и анализ](docs/ARCHITECTURE.md). Ниже сохранён исходный README. Выполнены 50 регрессионных теста; реальные LLM/GPU не проверялись. [Отчёт](docs/VERIFICATION.md).
-
 # <div align="center">🌸 Lina AI - Чиби-ассистент</div>
 
 <div align="center">
