@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QRadioButton,
     QStackedWidget,
+    QTabWidget, QScrollArea, QGroupBox,
     QVBoxLayout,
     QPushButton,
     QWidget,
@@ -34,10 +35,51 @@ class SettingsPanel(QWidget):
         self.pyaudio = None
 
         self._setup_ui()
+        self._setup_tabs()
         self._connect_ui_signals()
         self._connect_viewmodel_signals()
         self._sync_from_viewmodel()
 
+
+    def _setup_tabs(self):
+        """Group existing controls without changing their signals or values."""
+        self.tabs = QTabWidget(self)
+        self.tabs.tabBar().setExpanding(True)
+        self._tab_pages = {}
+        for title in ("Общие", "Настройки", "Плагины"):
+            page = QWidget()
+            layout = QVBoxLayout(page)
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            scroll.setFrameShape(QScrollArea.NoFrame)
+            scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            scroll.setWidget(page)
+            self.tabs.addTab(scroll, title)
+            self._tab_pages[title] = layout
+        a = self.advanced_panel
+        groups = (
+            ("Общие", "Пользователь", (self.user_label, self.user_input)),
+            ("Настройки", "Устройства", (self.mic_label, self.mic_combo, self.cam_label, self.cam_combo)),
+            ("Настройки", "Вычисления", (self.cb_gpu, self.cb_eco)),
+            ("Настройки", "Поведение", (a.autonomy_label, a.autonomy_combo)),
+            ("Настройки", "Среда выполнения", (a.sandbox_check, a.server_check)),
+            ("Настройки", "Диагностика", (self.cb_debug, self.cb_logs)),
+            ("Настройки", "Язык", (self.lang_label, self.rb_ru, self.rb_en, self.rb_zh)),
+            ("Плагины", "Плагины", (a.plugins_label, a.plugins_enabled_check, a.plugins_list, a.refresh_btn)),
+            ("Плагины", "Права инструментов", (a.permission_tool_combo, *a.permission_checks.values())),
+        )
+        for page, title, widgets in groups:
+            box = QGroupBox(title)
+            layout = QVBoxLayout(box)
+            for widget in widgets:
+                layout.addWidget(widget)
+                widget.show()
+            self._tab_pages[page].addWidget(box)
+        for layout in self._tab_pages.values():
+            layout.addStretch()
+        self.stacked_widget.hide()
+        self.back_button.hide()
+        self.layout().addWidget(self.tabs)
 
     def _connect_ui_signals(self):
         self.cb_debug.toggled.connect(

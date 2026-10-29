@@ -1,0 +1,22 @@
+{
+  "sdk_version": 1,
+  "id": "text_utils",
+  "enabled": true,
+  "entry": "plugin.py",
+  "tools": [
+    {
+      "name": "word_count",
+      "description": "Подсчитывает слова и символы в переданном тексте",
+      "permissions": [
+        "read"
+      ],
+      "parameters": {
+        "text": {
+          "type": "string",
+          "description": "Текст для подсчёта",
+          "required": true
+        }
+      }
+    }
+  ]
+}

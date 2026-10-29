@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QTimer, QFile
+from PySide6.QtCore import Qt, QTimer, QFile, Signal
 from PySide6.QtGui import QAction, QCloseEvent, QColor, QIcon, QPainter, QPainterPath, QPixmap
 from PySide6.QtWidgets import (
     QApplication, QHBoxLayout, QMenu, QMessageBox, QPushButton,
@@ -17,8 +17,13 @@ class LauncherWindow(QWidget):
     Только UI - вся логика в ViewModel.
     """
     
+    restart_requested = Signal()
+
     def __init__(self, viewmodel):
         super().__init__()
+        font = self.font()
+        font.setFamily("Segoe UI")
+        self.setFont(font)
         self.viewmodel = viewmodel
         self.pyaudio = None
         self.drag_offset = None
@@ -83,7 +88,7 @@ class LauncherWindow(QWidget):
             Qt.WindowType.FramelessWindowHint |
             Qt.WindowType.WindowStaysOnTopHint
         )
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
         self.resize(520, 780)
         self.setMinimumSize(480, 700)
         self.setWindowTitle("Lina AI Launcher")
@@ -120,6 +125,15 @@ class LauncherWindow(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
         
+        header = QHBoxLayout()
+        header.addStretch()
+        close_button = QPushButton("×")
+        close_button.setAccessibleName("Скрыть в трей")
+        close_button.setFixedWidth(36)
+        close_button.clicked.connect(self.hide)
+        header.addWidget(close_button)
+        main_layout.addLayout(header)
+
         # Панель с настройками
         self.panel = QWidget()
         self.panel.setObjectName("panel")
@@ -159,6 +173,9 @@ class LauncherWindow(QWidget):
         self.exit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         controls.addWidget(self.exit_btn)
         
+        self.restart_button = QPushButton("Перезагрузить приложение")
+        self.restart_button.clicked.connect(self.restart_requested.emit)
+        buttons.addWidget(self.restart_button)
         buttons.addLayout(controls)
         layout.addLayout(buttons)
     
@@ -357,13 +374,8 @@ class LauncherWindow(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setClipPath(path)
 
-        bg_path = f"{IMAGES}/launcher_bg.png"
-        if QFile.exists(bg_path):
-            pix = QPixmap(bg_path)
-            painter.drawPixmap(self.rect(), pix)
-        else:
-            painter.fillRect(self.rect(), QColor(30, 30, 30, 200))
-    
+        painter.fillRect(self.rect(), QColor("#20252b"))
+
     def closeEvent(self, event: QCloseEvent):
         """Закрытие окна - скрываем в трей вместо закрытия"""
         if self._is_closing:

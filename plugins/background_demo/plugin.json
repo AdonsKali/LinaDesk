@@ -1,0 +1,19 @@
+{
+  "sdk_version": 1,
+  "id": "background_demo",
+  "enabled": false,
+  "description": "Пример фоновой работы с прогрессом без внешних зависимостей",
+  "entry": "plugin.py",
+  "tools": [
+    {
+      "name": "wait",
+      "description": "Демонстрация фонового задания: ожидать от 1 до 60 секунд с прогрессом",
+      "background": true,
+      "timeout_seconds": 90,
+      "permissions": ["read"],
+      "parameters": {
+        "seconds": {"type": "integer", "description": "Число секунд от 1 до 60"}
+      }
+    }
+  ]
+}

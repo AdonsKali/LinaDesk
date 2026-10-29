@@ -60,6 +60,8 @@ class Settings:
     
     user_id: str
     behavior: BehaviorPolicy = field(default_factory=BehaviorPolicy)
+    vosk_model_path: Optional[str] = None
+    embedding_model_path: Optional[str] = None
     
     def __post_init__(self):
         # Валидация на уровне доменного объекта
