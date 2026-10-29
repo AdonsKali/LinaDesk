@@ -55,7 +55,6 @@ class Application:
         self._stop_task = None
         self._exit_requested = False
         self._shutdown_complete = False
-        self._interface_modes = None
 
     # =========================================================
     # APPLICATION START
@@ -339,13 +338,14 @@ class Application:
             event_bus=self._event_bus,
         )
         self._launcher.show()
+        self._launcher._window.restart_requested.connect(self._request_restart)
         logger.info("   Qt Launcher started")
 
     def _request_restart(self):
         if getattr(self, "restart_requested", False):
             return
         self.restart_requested = True
-        self._interface_modes.restart_button.setEnabled(False)
+        self._launcher._window.restart_button.setEnabled(False)
         self._launcher._viewmodel.exit_application()
 
     # =========================================================
@@ -364,8 +364,6 @@ class Application:
                 self._container.get_command_bus(),
                 self._container.get_event_bus(),
             )
-            if self._interface_modes:
-                self._interface_modes.bind(self._chibi_app)
             settings = self._container.get_settings()
             microphone = settings.microphone
             self._chibi_app.coordinator.api_service.activity_callback = self._container.container.gate().touch
@@ -398,9 +396,6 @@ class Application:
             await self._cleanup_runtime()
         try:
             if self._launcher:
-                if self._interface_modes:
-                    self._interface_modes.shutdown()
-                    self._interface_modes = None
                 self._launcher.shutdown()
                 self._launcher = None
         finally:
@@ -412,8 +407,6 @@ class Application:
 
     async def _stop_chibi_async(self):
         if self._chibi_app:
-            if self._interface_modes:
-                self._interface_modes.unbind()
             await self._chibi_app.aclose()
             self._chibi_app = None
 

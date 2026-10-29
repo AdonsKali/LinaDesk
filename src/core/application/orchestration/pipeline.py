@@ -1,4 +1,3 @@
-import asyncio
 from dataclasses import dataclass, replace
 from contextlib import aclosing
 import json
@@ -12,7 +11,6 @@ from src.core.application.subsystems.memory.prompts import (
 )
 from src.core.application.subsystems.mood.engine import MoodEngine
 from src.core.application.subsystems.tools.engine import ToolEngine
-from src.core.domain.events.tool_events import ToolExecution
 from src.core.domain.value_objects.tool import ToolCall
 from src.core.application.subsystems.tools.parser import ToolCallParser
 from src.core.application.ports.event_port import EventBusPort
@@ -254,8 +252,6 @@ class Pipeline:
                     sent = safe_end
         if tool_start is not None:
             call = self._parse_tool_from_buffer(buffer[tool_start:])
-            await self._bus.publish(ToolExecution(tool_name=call.name, parameters=call.arguments))
-            await asyncio.sleep(5)
             if call is None:
                 raise ValueError("Модель вернула некорректный вызов инструмента.")
             return StreamResult(buffer[:tool_start].strip(), call, buffer)

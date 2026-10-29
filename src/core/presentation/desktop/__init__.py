@@ -1,2 +1,1 @@
-from .cli import *
-from .qt import *
+"""Desktop presentation adapters are imported explicitly."""

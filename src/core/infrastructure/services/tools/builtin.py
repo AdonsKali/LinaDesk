@@ -144,6 +144,7 @@ class AIShellController(BaseTool):
 
 
 BUILTIN_TOOLS: list[type[BaseTool]] = [
+    EchoTool,
     GetCurrentTimeTool,
     GetCurrentDateTool,
     AIShellController,

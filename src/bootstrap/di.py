@@ -165,15 +165,15 @@ class Container(containers.DeclarativeContainer):
     # LLM
     # ============================================================
 
-    speech_recognizer = providers.Singleton(_build_speech_recognizer, model_path=VOSK_MODEL)
+    speech_recognizer = providers.Singleton(_build_speech_recognizer, model_path=config.vosk_model_path)
     recognize_speech_handler = providers.Factory(
         RecognizeSpeechHandler, recognizer=speech_recognizer, event_bus=event_bus, gate=gate,
     )
 
     llm = providers.Singleton(
         LlamaCppProvider,
-        model_path=str(LLM_MODEL),
-        mmproj_path=str(MMPROJ),
+        model_path=config.llm.model_path,
+        mmproj_path=config.llm.mmproj_path,
         n_ctx=config.llm.context_window,
         n_threads=config.llm.n_threads,
         n_gpu_layers=config.llm.n_gpu_layers,
@@ -189,7 +189,7 @@ class Container(containers.DeclarativeContainer):
     # MEMORY REPO (SQLite + dedicated sentence embeddings)
     # ============================================================
 
-    embeddings = providers.Singleton(SentenceTransformerEmbeddings, model_path=EMBEDDING_MODEL)
+    embeddings = providers.Singleton(SentenceTransformerEmbeddings, model_path=config.embedding_model_path)
     memory_repo = providers.Singleton(
         SQLiteMemoryRepository,
         embeddings=embeddings,
@@ -388,6 +388,9 @@ class ApplicationContainer:
         self._settings = settings
 
         self.container.config.from_dict({
+            "embedding_model_path": settings.embedding_model_path,
+            "vosk_model_path": settings.vosk_model_path,
+            "economy_mode": bool(settings.on_economy),
             "behavior": new["behavior"],
             "plugins_enabled": settings.on_plugins,
             "version": settings.version,
@@ -395,6 +398,8 @@ class ApplicationContainer:
             "language": settings.language,
             "on_gpu": bool(settings.on_gpu),
             "llm": {
+                "model_path": (settings.llm.model_path or str(LLM_MODEL)) if settings.llm else str(LLM_MODEL),
+                "mmproj_path": (settings.llm.mmproj_path or str(MMPROJ)) if settings.llm else str(MMPROJ),
                 "context_window": (settings.llm.context_window or 4096) if settings.llm else 4096,
                 "n_threads": (settings.llm.n_threads or 4) if settings.llm else 4,
                 "n_gpu_layers": -1 if settings.on_gpu else 0,

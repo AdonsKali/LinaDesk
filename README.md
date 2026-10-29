@@ -136,3 +136,8 @@ update.bat
 <div align="center">
   <sub>Сделано с ❤️ для лучшего взаимодействия человека и ИИ</sub>
 </div>
+
+## Доработки desktop-версии
+
+[Состав переноса и проверки](docs/DEV_TRANSFER_RU.md) ·
+[Память](docs/MEMORY.md) · [Плагины](docs/TOOLS.md) · [Речь](docs/SPEECH.md)

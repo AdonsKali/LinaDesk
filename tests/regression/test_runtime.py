@@ -102,37 +102,35 @@ def prepare(app, path, llm):
 
 
 async def test_interface_and_diagnostics_without_starting_model(qt_app, tmp_path, monkeypatch):
-    from . import local_paths
+    import local_paths
     monkeypatch.setattr(local_paths, "BASE_DIR", tmp_path)
     app = Application(qt_app=qt_app)
     llm = SimpleNamespace(initialize=AsyncMock(), close=AsyncMock())
     prepare(app, tmp_path, llm)
     running = asyncio.create_task(app.run())
     try:
-        await until(lambda: app._interface_modes is not None)
-        c = app._interface_modes
+        await until(lambda: app._launcher is not None)
         window = app._launcher._window
         vm = app._launcher._viewmodel
-        c.interface_combo.setCurrentIndex(c.interface_combo.findData("herta"))
-        assert c.mode == "herta" and app._chibi_app is None
-        c._settings_tabs.setCurrentIndex(1)
+        assert app._chibi_app is None
+        window.settings_panel.tabs.setCurrentIndex(1)
         window.settings_panel.cb_debug.setChecked(True)
         window.settings_panel.cb_logs.setChecked(True)
         await until(lambda: vm._settings.get("on_debug") and vm._settings.get("on_log"))
         saved = await app._container.get_settings_repo().get()
         assert saved.on_debug and saved.on_log
-        c.interface_combo.setCurrentIndex(c.interface_combo.findData("lina_classic"))
-        c.interface_combo.setCurrentIndex(c.interface_combo.findData("herta"))
+        window.settings_panel.tabs.setCurrentIndex(0)
+        window.settings_panel.tabs.setCurrentIndex(1)
         assert window.settings_panel.cb_debug.isChecked()
         assert window.settings_panel.cb_logs.isChecked()
-        c.close_button.click()
+        window.close()
         assert not window.isVisible()
         llm.initialize.assert_not_called()
         assert not vm.is_system_running()
-        c.restart_button.click()
-        c.restart_button.click()
+        window.restart_button.click()
+        window.restart_button.click()
         assert app.restart_requested
-        assert not c.restart_button.isEnabled()
+        assert not window.restart_button.isEnabled()
         await asyncio.wait_for(running, 8)
     finally:
         if not running.done():
@@ -297,6 +295,8 @@ async def test_start_click_hides_launcher_before_initialized(qt_app, monkeypatch
     assert window.isVisible()
     assert window.start_btn.isEnabled()
     assert not hasattr(window.settings_panel.advanced_panel, "model_path")
+    window.settings_panel.tabs.setCurrentIndex(1)
+    qt_app.processEvents()
     assert window.settings_panel.cb_gpu.isVisible()
     assert window.settings_panel.cb_gpu.text() == "Видеокарта"
     window._close_app()
